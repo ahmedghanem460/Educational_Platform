@@ -27,7 +27,8 @@ const Home = () => {
   if (loading) {
     return (
       <View style={{flex:1, justifyContent: 'center', alignItems: 'center', backgroundColor:'#fff'}}>
-        <ActivityIndicator size="large" color="#ffd33d" />
+        
+        <ActivityIndicator size="large" color="#ffd33d" />  
       </View>
     );
   }

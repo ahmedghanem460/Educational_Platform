@@ -11,7 +11,7 @@ const NoCourse = () => {
   }
 
   const handleExploreCourses = () => {
-    router.push('/(tabs)/explore-courses');
+    router.push('/(tabs)/courseListing');
   }
 
   return (
@@ -44,7 +44,7 @@ const NoCourse = () => {
         </Text>
       </View>
 
-      <View style={{width: '100%'}}>
+      <View style={{width: '45%',marginHorizontal: 'auto'}}>
         <Button 
           text='+ Create New Course' 
           onPress={handleCreateCourse}

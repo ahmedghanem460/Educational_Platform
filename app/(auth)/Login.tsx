@@ -66,8 +66,9 @@ const Login = () => {
                 onChangeText={setEmail}
                 keyboardType="email-address"
             />
+            <View style={{ flexDirection: 'column', alignItems: 'center', marginBottom: 10 }}>
             <TextInput
-                style={styles.input}
+                style={[styles.input,{alignSelf: 'flex-end'}]}
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
@@ -76,8 +77,10 @@ const Login = () => {
             <Pressable onPress={() => setShowPassword(!showPassword)} style={{ marginBottom: 10 }}>
                 <Text>{showPassword ? 'Hide Password' : 'Show Password'}</Text>
             </Pressable>
+
+            </View>
             <Pressable onPress={signIn} disabled={loading}>
-                <Text style={[styles.button, {backgroundColor: '#007bff', padding: 10, borderRadius: 5, marginBottom: 10, color:"white"}]}>Login</Text>
+                <Text style={[styles.button, {backgroundColor: '#007bff', borderRadius: 5, marginBottom: 10, color:"white"}]}>Login</Text>
             </Pressable>
             <Pressable onPress={() => router.push('/(auth)/Register')} disabled={loading}>
                 <Text style={[styles.button, {borderColor:"white"}]}>Don't have an account? <Text style={{color:'#007bff'}}>Register</Text></Text>
@@ -110,11 +113,16 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         marginBottom: 12,
         paddingHorizontal: 8,
+        width: '50%',
+        marginHorizontal: 'auto',
     },
     button: {
         padding: 10,
         borderRadius: 5,
         color: 'black',
         textAlign: 'center',
+        width: '25%',
+        marginHorizontal: 'auto',
     },
+    
 });
