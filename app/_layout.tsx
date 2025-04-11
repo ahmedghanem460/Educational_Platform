@@ -4,7 +4,7 @@
 
 // export default function TabLayout() {
 //   return (
-    
+
 //     <Tabs
 //       screenOptions={{
 //         tabBarActiveTintColor: '#ffd33d',
@@ -18,7 +18,7 @@
 //         },
 //       }}
 //     >
-    
+
 //       <Tabs.Screen
 //         name="index"
 //         options={{
@@ -51,12 +51,12 @@
 //   );
 // }
 
-import { Stack } from 'expo-router';
-import { useFonts } from 'expo-font';
-import { useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
-import { SplashScreen } from 'expo-router';
-import React from 'react';
+import { Stack } from "expo-router";
+import { useFonts } from "expo-font";
+import { useEffect } from "react";
+import { View, ActivityIndicator } from "react-native";
+import { SplashScreen } from "expo-router";
+import React from "react";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -66,9 +66,9 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    'outfit': require('@/assets/fonts/Outfit-Regular.ttf'),
-    'outfit-bold': require('@/assets/fonts/Outfit-Bold.ttf'),
-    'outfit-medium': require('@/assets/fonts/Outfit-Medium.ttf'),
+    outfit: require("@/assets/fonts/Outfit-Regular.ttf"),
+    "outfit-bold": require("@/assets/fonts/Outfit-Bold.ttf"),
+    "outfit-medium": require("@/assets/fonts/Outfit-Medium.ttf"),
   });
 
   useEffect(() => {
@@ -80,8 +80,8 @@ export default function RootLayout() {
 
   if (!fontsLoaded && !fontError) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#ffd33d" />
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#ffa33d" />
       </View>
     );
   }

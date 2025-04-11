@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#25292e',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 30, // Increased padding
+    padding: 30, 
   },
   title: {
     color: 'white',
