@@ -93,7 +93,24 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0.0"
+
+        // Add C++ configuration
+        externalNativeBuild {
+            cmake {
+                arguments "-DANDROID_STL=c++_shared"
+                cppFlags rootProject.ext.cxxFlags
+            }
+        }
     }
+
+    // Add C++ build configuration
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+            version "3.22.1"
+        }
+    }
+
     signingConfigs {
         debug {
             storeFile file('debug.keystore')

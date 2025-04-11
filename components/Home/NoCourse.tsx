@@ -37,7 +37,7 @@ const NoCourse = () => {
         <Text style={{
           fontSize: 24,
           fontFamily: 'outfit-bold',
-          // color: 'black',
+          color: 'white',
           textAlign: 'center'
         }}>
           You Don't Have Any Course

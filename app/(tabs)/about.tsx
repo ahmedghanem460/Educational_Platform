@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
-import { FIREBASE_AUTH } from "../../config/FirebaseConfig";
+// import { FIREBASE_AUTH } from "../../config/FirebaseConfig";
 import React from "react";
 
 const teamMembers = [
@@ -21,7 +21,7 @@ const teamMembers = [
   },
 ];
 
-const logout = () => FIREBASE_AUTH.signOut();
+// const logout = () => FIREBASE_AUTH.signOut();
 
 export default function AboutScreen() {
   return (
@@ -36,9 +36,9 @@ export default function AboutScreen() {
           ) : null}
         </View>
       ))}
-      <Pressable onPress={logout}>
+      {/* <Pressable onPress={logout}>
         <Text style={styles.link}>Logout</Text>
-      </Pressable>
+      </Pressable> */}
     </ScrollView>
   );
 }
@@ -48,10 +48,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#25292e",
     padding: 20,
+    fontFamily: "outfit",
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontFamily: "outfit-bold",
     color: "#fff",
     textAlign: "center",
     marginBottom: 20,
@@ -64,15 +65,15 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: "outfit-bold",
     color: "#f8f8f8",
   },
   info: {
     color: "#ccc",
     fontSize: 14,
   },
-  link: {
-    color: "#1e90ff",
-    textDecorationLine: "underline",
-  },
+  // link: {
+  //   color: "#1e90ff",
+  //   textDecorationLine: "underline",
+  // },
 });
