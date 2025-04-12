@@ -1,13 +1,7 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  Linking,
-} from 'react-native';
+import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Image as RNImage } from 'react-native';
 
 const courses = [
   {
@@ -109,35 +103,52 @@ const courses = [
     image: require('../../assets/images/Java-Logo.jpg'), 
     url: 'https://youtu.be/eIrMbAQSU34?si=F36kShbOHgNek5Kx' 
   },
-
 ];
 
-const handleAddToFavorites = (courseId: string) => {
-  console.log(`Course with ID ${courseId} added to favorites`);
-};
-
-const handleAddToWatchLater = (courseId: string) => {
-  console.log(`Course with ID ${courseId} added to watch later`);
-};
-
-const handleBuyCourse = (courseId: string) => {
-  console.log(`Course with ID ${courseId} added to cart`);
-}
-
 const CourseListing = () => {
-  const openCourse = (url: string) => {
-    Linking.openURL(url);
-  };
-
+  const router = useRouter();
+  const [search, setSearch] = React.useState('');
+  const [filteredCourses, setFilteredCourses] = React.useState(courses);
   return (
     <View style={styles.container}>
+    
+      <Text style={styles.title}>Course Listing</Text>
+      <TextInput
+        style={styles.searchBar}
+        placeholder="Search for courses..."
+        value={search}
+        onChangeText={(text) => {
+          setSearch(text);
+          const filtered = courses.filter((course) =>
+            course.title.toLowerCase().includes(text.toLowerCase())
+          );
+          setFilteredCourses(filtered);
+        }}
+      />
+
+      <Text style={styles.resultsText}>
+        {filteredCourses.length} results found
+      </Text>
+      
       <FlatList
-        data={courses}
+        data={filteredCourses}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
-            onPress={() => openCourse(item.url)}
+            onPress={() =>
+              router.push({
+                pathname: '/courseDetails',
+                params: {
+                  title: item.title,
+                  description: item.description,
+                  price: item.price,
+                  image: RNImage.resolveAssetSource(item.image).uri,
+                  url: item.url,
+                  channel: item.Channel,
+                },
+              })
+            }
           >
             <Image
               source={typeof item.image === 'string' ? { uri: item.image } : item.image}
@@ -148,30 +159,9 @@ const CourseListing = () => {
               <Text style={styles.channel}>{item.Channel}</Text>
               <Text style={styles.description}>{item.description}</Text>
               <Text style={styles.price}>{item.price}</Text>
-              <View style={styles.actions}>
-                
-                <TouchableOpacity
-                  style={[styles.button, { backgroundColor: '#28a745' }]}
-                  onPress={() => handleBuyCourse(item.id)}
-                >
-                  <Text style={styles.buttonText}>Buy it</Text>
-                </TouchableOpacity>
-              </View>
             </View>
           </TouchableOpacity>
         )}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 20 }}
-        ListEmptyComponent={
-          <Text style={{ textAlign: 'center', fontWeight: '500', marginTop: 20 }}>
-            No courses available
-          </Text>
-        }
-        ListFooterComponent={
-          <Text style={{ textAlign: 'center', fontFamily: 'outfit-bold', marginTop: 20, fontSize: 20 }}>
-            End of courses
-          </Text>
-        }
       />
     </View>
   );
@@ -192,10 +182,6 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
   },
   image: {
     width: 70,
@@ -227,20 +213,19 @@ const styles = StyleSheet.create({
     color: '#007bff',
     marginBottom: 8,
   },
-  actions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  button: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: '#ff6347',
+  searchBar: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
     borderRadius: 5,
-    marginRight: 10,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+    marginTop: 10,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: 'bold',
+  resultsText: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 10,
+    textAlign: 'center',
   },
 });
