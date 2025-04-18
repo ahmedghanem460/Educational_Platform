@@ -56,12 +56,14 @@ const Register = () => {
 
         <TextInput
           style={styles.input}
+          placeholderTextColor="#888"
           placeholder="Name"
           value={name}
           onChangeText={setName}
         />
         <TextInput
           style={styles.input}
+          placeholderTextColor="#888"
           placeholder="Email"
           value={email}
           onChangeText={setEmail}
@@ -69,6 +71,7 @@ const Register = () => {
         />
         <TextInput
           style={styles.input}
+          placeholderTextColor="#888"
           placeholder="Password"
           value={password}
           onChangeText={setPassword}
@@ -81,6 +84,7 @@ const Register = () => {
 
         <TextInput
           style={styles.input}
+          placeholderTextColor="#888"
           placeholder="Confirm Password"
           value={confirmPassword}
           onChangeText={setConfirmPassword}

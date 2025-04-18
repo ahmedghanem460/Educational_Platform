@@ -22,17 +22,18 @@ const courses = [
     image: require('../../assets/images/js.jpg'),
     url: 'https://youtu.be/lfmg-EJ8gm4?si=yLN87XnqXTIYEq0b',
   },
+
+  // {
+  //   id: '3',
+  //   title: 'UI/UX Design in Arabic',
+  //   Channel: 'Mina Boules',
+  //   description: 'Master UI/UX design concepts in Arabic.',
+  //   price: '$125.00',
+  //   image: require('../../assets/images/uiux.jpg'),
+  //   url: 'https://youtube.com/playlist?list=PLmQ0KfqeaHAuud_Aav-94nfToArf6Uh4K&si=vJgznQUe-9Y22sVH',
+  // },
   {
     id: '3',
-    title: 'UI/UX Design in Arabic',
-    Channel: 'Mina Boules',
-    description: 'Master UI/UX design concepts in Arabic.',
-    price: '$125.00',
-    image: require('../../assets/images/uiux.jpg'),
-    url: 'https://youtube.com/playlist?list=PLmQ0KfqeaHAuud_Aav-94nfToArf6Uh4K&si=vJgznQUe-9Y22sVH',
-  },
-  {
-    id: '4',
     title: 'Python in 100 Seconds',
     Channel: 'Fireship',
     description: 'Understand Python quickly in this short video.',
@@ -41,7 +42,7 @@ const courses = [
     url: 'https://youtu.be/x7X9w_GIm1s?si=CvHePx9xrzLuOWAI',
   },
   { 
-    id: '5', 
+    id: '4', 
     title: 'Node.js and other topics in Arabic ', 
     Channel: 'أكاديمية ترميز', 
     description: 'Learn Node.js and other topics in Arabic.',
@@ -50,7 +51,7 @@ const courses = [
     url: 'https://youtu.be/LG7ff9TVWjM?si=JpvZ7cgEUPhH0gjC' 
   },
   { 
-    id: '6', 
+    id: '5', 
     title: 'Flutter in Arabic',
     Channel: 'adham saber', 
     description: 'Learn Flutter in Arabic.',
@@ -59,7 +60,7 @@ const courses = [
     url: 'https://youtu.be/D1Go5WAw6Z0?si=wx_YJu3dcMUrtvaD' 
   },
   {
-    id: '7', 
+    id: '6', 
     title: 'DevOps Tutorial for Beginners', 
     Channel: 'edureka!', 
     description: 'A complete guide to DevOps for beginners.',
@@ -68,7 +69,7 @@ const courses = [
     url: 'https://youtu.be/hQcFE0RD0cQ?si=chY_oyzG3E2Jh19m' 
   },
   { 
-    id: '8',  
+    id: '7',  
     title: 'Data Science Full Course for Beginners', 
     Channel: 'Simplilearn', 
     description: 'A complete guide to Data Science for beginners.',
@@ -77,7 +78,7 @@ const courses = [
     url: 'https://youtu.be/SJuR41tlE9k?si=LngPVyUbEPQJRX7M' 
   },
   { 
-    id: '9',  
+    id: '8',  
     title: 'Machine Learning with Python and Scikit', 
     Channel: 'freeCodeCamp.org', 
     description: 'Learn Machine Learning with Python and Scikit.',
@@ -86,7 +87,7 @@ const courses = [
     url: 'https://youtu.be/hDKCxebp88A?si=pg6miE7swjWZrLHz' 
   },
   { 
-    id: '10', 
+    id: '9', 
     title: 'Cyber Security for Beginners', 
     Channel: 'Google Career Certificates', 
     description: 'A complete guide to Cyber Security for beginners.',
@@ -95,7 +96,7 @@ const courses = [
     url: 'https://youtu.be/_DVVNOGYtmU?si=fmurJTjrYB8m5SLN' 
   },
   { 
-    id: '11', 
+    id: '10', 
     title: 'Java Full Course for Beginners', 
     Channel: 'Programming with Mosh', 
     description: 'Learn Java from scratch in this full course.',

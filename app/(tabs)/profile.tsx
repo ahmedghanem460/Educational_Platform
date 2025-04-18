@@ -1,70 +1,97 @@
-import React from 'react';
-import { FIREBASE_AUTH } from "../../config/FirebaseConfig";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  FlatList,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
 
-const user = {
-  name: 'Test',
-  email: 'Test@example.com',
-  avatar: 'https://i.pravatar.cc/150?img=12',
-  courses: [
-    { id: '1', title: 'Intro to Computer Science' },
-    { id: '2', title: 'Data Structures & Algorithms' },
-    { id: '3', title: 'Mobile App Development' },
-  ],
-};
+import React, { useState } from 'react';
+import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/FirebaseConfig';
+import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, getDocs } from 'firebase/firestore';
+import { useFocusEffect } from '@react-navigation/native';
 
 const Profile = () => {
-  const handleEditCourses = () => {
-    Alert.alert('Edit Courses', 'This will navigate to the edit courses screen.');
-    // You can navigate to a screen or open a modal here
+  const [user, setUser] = useState<any>(null);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      let isActive = true;
+
+      const fetchData = async () => {
+        const currentUser = FIREBASE_AUTH.currentUser;
+        if (currentUser) {
+          setUser(currentUser);
+          try {
+            const coursesRef = collection(FIREBASE_DB, 'users', currentUser.uid, 'courses');
+            const querySnapshot = await getDocs(coursesRef);
+            const userCourses = querySnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data(),
+            }));
+            if (isActive) {
+              setCourses(userCourses);
+            }
+          } catch (error) {
+            console.error("Error fetching user courses:", error);
+          } finally {
+            if (isActive) setLoading(false);
+          }
+        } else {
+          setLoading(false);
+        }
+      };
+
+      fetchData();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
+
+  const logout = () => {
+    FIREBASE_AUTH.signOut();
+    Alert.alert('Logged out', 'You have been logged out.');
   };
 
-  const handleLogout = () => {
-    Alert.alert('Logout', 'You have been logged out.');
-    // Add actual logout logic here
-  };
-  const logout = () => FIREBASE_AUTH.signOut();
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <View style={styles.center}>
+        <Text>User not logged in.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {/* User Card */}
       <View style={styles.card}>
-        <Image source={{ uri: user.avatar }} style={styles.avatar} />
+        <Image source={require('../../assets/images/Basha El Balaaaad.jpg')} style={styles.avatar} />
         <View style={styles.info}>
-          <Text style={styles.name}>{user.name}</Text>
+          <Text style={styles.name}>{user?.displayName ?? 'Basha EL Balaaad'}</Text>
           <Text style={styles.email}>{user.email}</Text>
         </View>
-
-        <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.btn} onPress={handleEditCourses}>
-              <Text style={styles.btnText}>Edit Courses</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity  style={[styles.btn, styles.logoutBtn]} onPress={logout}>
-              <Text style={[styles.btnText, { color: 'red' }]}>Logout</Text>
-            </TouchableOpacity>
-          </View>
+        <TouchableOpacity style={[styles.btn, styles.logoutBtn]} onPress={logout}>
+          <Text style={[styles.btnText, { color: 'red' }]}>Logout</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Courses Section */}
       <Text style={styles.sectionTitle}>My Courses</Text>
       <FlatList
-        data={user.courses}
+        data={courses}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.courseCard}>
-            <Text style={styles.courseTitle}>{item.title}</Text>
+            <Text style={styles.courseTitle}>{item.title || 'No Title'}</Text>
           </View>
         )}
         contentContainerStyle={styles.courseList}
+        ListEmptyComponent={<Text style={{ color: '#777' }}>No courses yet.</Text>}
       />
     </View>
   );
@@ -77,6 +104,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f6f9fc',
     padding: 20,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   card: {
     backgroundColor: '#ffffff',
@@ -152,3 +184,5 @@ const styles = StyleSheet.create({
     color: '#333',
   },
 });
+
+

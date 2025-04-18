@@ -94,9 +94,6 @@ export default function Index() {
           <Pressable onPress={() => router.push('/Login')} style={{ marginTop: 5, alignSelf:'center' }}>
             <Text style={styles.link}>Already have an account</Text>
           </Pressable>
-          {/* <Pressable onPress={() => router.push('/app/(tabs)/about.tsx')} style={{ marginTop: 20 }}>
-              <Text style={styles.learnMore}>Learn More About Us</Text>
-          </Pressable> */}
         </ScrollView>
     </View>
 );
@@ -160,18 +157,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'outfit',
   },
-  // button: {
-  //   backgroundColor: '#1e90ff',
-  //   paddingVertical: 12,
-  //   paddingHorizontal: 30,
-  //   borderRadius: 8,
-  //   marginTop: 20,
-  // },
-  // buttonText: {
-  //   color: 'white',
-  //   fontSize: 18,
-  //   fontFamily: 'outfit-bold',
-  // },
   learnMore: {
     color: 'lightblue',
     marginTop: 25,

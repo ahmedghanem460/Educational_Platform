@@ -61,6 +61,7 @@ const Login = () => {
             <Text style={styles.title}>Login</Text>
             <TextInput
                 style={styles.input}
+                placeholderTextColor="#888"
                 placeholder="Email"
                 value={email}
                 onChangeText={setEmail}
@@ -68,6 +69,7 @@ const Login = () => {
             />
             <TextInput
                 style={styles.input}
+                placeholderTextColor="#888"
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}

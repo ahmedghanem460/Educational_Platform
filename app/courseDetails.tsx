@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +11,8 @@ import {
   Linking,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import { FIREBASE_AUTH, FIREBASE_DB } from '../config/FirebaseConfig';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const CourseDetail = () => {
   const params = useLocalSearchParams();
@@ -24,6 +27,23 @@ const CourseDetail = () => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const [isBought, setIsBought] = useState(false);
 
+
+  const user = FIREBASE_AUTH.currentUser;
+  
+  // Fetch course purchase status when the page loads
+  useEffect(() => {
+    const checkCourseStatus = async () => {
+      if (user) {
+        const courseRef = doc(FIREBASE_DB, 'users', user.uid, 'courses', title);
+        const docSnap = await getDoc(courseRef);
+        if (docSnap.exists()) {
+          setIsBought(true); // Set course as bought if it exists
+        }
+      }
+    };
+    checkCourseStatus();
+  }, [user, title]);
+
   const handleBuyPressIn = () => {
     Animated.spring(scaleAnim, {
       toValue: 0.95,
@@ -31,12 +51,24 @@ const CourseDetail = () => {
     }).start();
   };
 
-  const handleBuyPressOut = () => {
+  const handleBuyPressOut = async () => {
     Animated.spring(scaleAnim, {
       toValue: 1,
       useNativeDriver: true,
-    }).start(() => {
-      setIsBought(true);
+    }).start(async () => {
+      if (user) {
+        // Mark course as bought in Firestore
+        try {
+          await setDoc(
+            doc(FIREBASE_DB, 'users', user.uid, 'courses', title),
+            { title, description, price, image, channel, url },
+            { merge: true }
+          );
+          setIsBought(true);
+        } catch (error) {
+          console.error("Error buying course: ", error);
+        }
+      }
     });
   };
 
@@ -64,8 +96,9 @@ const CourseDetail = () => {
               activeOpacity={0.8}
               onPressIn={handleBuyPressIn}
               onPressOut={handleBuyPressOut}
+              disabled={isBought} // Disable button if course is already bought
             >
-              <Text style={styles.buttonText}>Buy Now</Text>
+              <Text style={styles.buttonText}>{isBought ? 'Bought' : 'Buy Now'}</Text>
             </TouchableOpacity>
           </Animated.View>
 
@@ -105,7 +138,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
     height: 250,
-    backgroundColor: '#f1f1f1', // لون الخلفية خلف الصورة ليبرز الظل
+    backgroundColor: '#f1f1f1', 
     borderRadius: 20,
     marginBottom: 20,
     justifyContent: 'center',

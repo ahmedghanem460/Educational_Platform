@@ -21,9 +21,6 @@ const Home = () => {
     }
 
   }
-  // const scrollToTop = () => {
-  //     scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
-  // };
 
   useEffect(() => {
     const unsubscribe = FIREBASE_AUTH.onAuthStateChanged((user) => {
@@ -69,7 +66,6 @@ const Home = () => {
           <Text style={{ fontSize: 18, color: '#1e90ff', fontFamily: 'outfit' }}>Sign Out</Text>
         </Pressable>
       </ScrollView>
-      {/* <Text style={{fontSize:25, fontWeight:'bold'}}>Home</Text> */}
     </View>
   )
 }
