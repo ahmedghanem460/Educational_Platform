@@ -2,22 +2,33 @@ import { View, Text, Platform, ActivityIndicator, TextInput, Pressable, Keyboard
 import React, { useEffect, useRef, useState } from 'react'
 import Header from '../../components/Home/Header'
 import NoCourse from '../../components/Home/NoCourse'
-import { FIREBASE_AUTH } from '../../config/FirebaseConfig'
+import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/FirebaseConfig'
 import { useRouter } from 'expo-router'
+import { addDoc, collection, Timestamp } from 'firebase/firestore'
 
 const Home = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const scrollViewRef = useRef<ScrollView | null>(null);
-  const [massage, setmassage] = useState('');
+  const [feedbacks, setfeedbacks] = useState('');
   const usermassage = async () => {
-    if (massage) {
-      alert('Thanks For Suggestion')
-      setmassage('')
-    }
-    else {
-      alert('Please Write a Massage ')
+    try {
+      if (feedbacks) {
+        await addDoc(collection(FIREBASE_DB, 'feedbacks'), {
+          email: FIREBASE_AUTH.currentUser?.email,
+          massage: feedbacks,
+          Timestamp: new Date()
+        })
+        alert('Thanks For Suggestion')
+        setfeedbacks('')
+      }
+      else {
+        alert('Please Write a Massage ')
+      }
+    } catch (error: any) {
+      const errormassage = error.massage
+      alert('Error signing in: ' + errormassage)
     }
 
   }
@@ -57,8 +68,8 @@ const Home = () => {
           <TextInput
             style={styles.input}
             placeholder="Suggestions To Improve The Service"
-            value={massage}
-            onChangeText={setmassage}
+            value={feedbacks}
+            onChangeText={setfeedbacks}
           />
           <Pressable onPress={(usermassage)}><Text style={styles.button}>send</Text></Pressable>
         </KeyboardAvoidingView>
