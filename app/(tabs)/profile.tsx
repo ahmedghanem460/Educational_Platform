@@ -1,15 +1,15 @@
-
 import React, { useState } from 'react';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/FirebaseConfig';
 import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { onAuthStateChanged } from 'firebase/auth';
-import { collection, getDocs } from 'firebase/firestore';
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
+import { collection, getDocs } from 'firebase/firestore';
 
 const Profile = () => {
   const [user, setUser] = useState<any>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -47,9 +47,15 @@ const Profile = () => {
     }, [])
   );
 
-  const logout = () => {
-    FIREBASE_AUTH.signOut();
-    Alert.alert('Logged out', 'You have been logged out.');
+  const logout = async () => {
+    try {
+      await FIREBASE_AUTH.signOut();
+      Alert.alert('Logged out', 'You have been logged out successfully.');
+      router.replace('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
   };
 
   if (loading) {
@@ -71,9 +77,12 @@ const Profile = () => {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Image source={require('../../assets/images/Basha El Balaaaad.jpg')} style={styles.avatar} />
+        <Image 
+          source={user.photoURL ? { uri: user.photoURL } : require('../../assets/images/Basha El Balaaaad.jpg')} 
+          style={styles.avatar} 
+        />
         <View style={styles.info}>
-          <Text style={styles.name}>{user?.displayName ?? 'Basha EL Balaaad'}</Text>
+          <Text style={styles.name}>{user.displayName || user.email?.split('@')[0] || 'User'}</Text>
           <Text style={styles.email}>{user.email}</Text>
         </View>
         <TouchableOpacity style={[styles.btn, styles.logoutBtn]} onPress={logout}>
@@ -86,9 +95,29 @@ const Profile = () => {
         data={courses}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.courseCard}>
-            <Text style={styles.courseTitle}>{item.title || 'No Title'}</Text>
-          </View>
+          <TouchableOpacity 
+            style={styles.courseCard}
+            onPress={() => router.push({
+              pathname: '/courseDetails',
+              params: {
+                title: item.title,
+                description: item.description,
+                price: item.price,
+                image: item.image,
+                url: item.url,
+                channel: item.channel,
+              }
+            })}
+          >
+            <Image 
+              source={typeof item.image === 'string' ? { uri: item.image } : item.image}
+              style={styles.courseImage}
+            />
+            <View style={styles.courseInfo}>
+              <Text style={styles.courseTitle}>{item.title || 'No Title'}</Text>
+              <Text style={styles.courseChannel}>{item.channel}</Text>
+            </View>
+          </TouchableOpacity>
         )}
         contentContainerStyle={styles.courseList}
         ListEmptyComponent={<Text style={{ color: '#777' }}>No courses yet.</Text>}
@@ -96,8 +125,6 @@ const Profile = () => {
     </View>
   );
 };
-
-export default Profile;
 
 const styles = StyleSheet.create({
   container: {
@@ -141,11 +168,6 @@ const styles = StyleSheet.create({
     color: '#777',
     marginBottom: 10,
   },
-  buttonRow: {
-    flexDirection: 'column',
-    gap:10,
-    marginEnd: 30,
-  },
   btn: {
     backgroundColor: '#eef1f4',
     paddingVertical: 8,
@@ -178,11 +200,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   courseTitle: {
     fontSize: 16,
     color: '#333',
   },
+  courseImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 10,
+    marginRight: 15,
+  },
+  courseInfo: {
+    flex: 1,
+  },
+  courseChannel: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 5,
+  },
 });
 
-
+export default Profile;

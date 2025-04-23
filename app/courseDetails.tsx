@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
@@ -9,6 +8,9 @@ import {
   TouchableOpacity,
   Animated,
   Linking,
+  Alert,
+  ImageSourcePropType,
+  ImageURISource
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../config/FirebaseConfig';
@@ -20,24 +22,30 @@ const CourseDetail = () => {
   const title = params.title as string;
   const description = params.description as string;
   const price = params.price as string;
-  const image = params.image as string;
   const channel = params.channel as string;
   const url = params.url as string;
+  
+  const getImageSource = (): ImageSourcePropType => {
+    if (typeof params.image === 'string') {
+      return { uri: params.image };
+    }
+    return params.image as ImageSourcePropType;
+  };
+
+  const imageSource = getImageSource();
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const [isBought, setIsBought] = useState(false);
 
-
   const user = FIREBASE_AUTH.currentUser;
   
-  // Fetch course purchase status when the page loads
   useEffect(() => {
     const checkCourseStatus = async () => {
       if (user) {
         const courseRef = doc(FIREBASE_DB, 'users', user.uid, 'courses', title);
         const docSnap = await getDoc(courseRef);
         if (docSnap.exists()) {
-          setIsBought(true); // Set course as bought if it exists
+          setIsBought(true);
         }
       }
     };
@@ -57,14 +65,23 @@ const CourseDetail = () => {
       useNativeDriver: true,
     }).start(async () => {
       if (user) {
-        // Mark course as bought in Firestore
         try {
           await setDoc(
             doc(FIREBASE_DB, 'users', user.uid, 'courses', title),
-            { title, description, price, image, channel, url },
+            { 
+              title, 
+              description, 
+              price, 
+              image: typeof params.image === 'string' ? params.image : (params.image as ImageURISource).uri,
+              channel, 
+              url 
+            },
             { merge: true }
           );
           setIsBought(true);
+          Alert.alert('Success', 'Course purchased successfully!', [
+            { text: 'OK', onPress: () => handleWatch() }
+          ]);
         } catch (error) {
           console.error("Error buying course: ", error);
         }
@@ -82,7 +99,11 @@ const CourseDetail = () => {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.imageContainer}>
-          <Image source={{ uri: image }} style={styles.image} />
+          <Image 
+            source={imageSource}
+            style={styles.image}
+            resizeMode="contain"
+          />
         </View>
         <View style={styles.content}>
           <Text style={styles.title}>{title}</Text>
@@ -96,7 +117,7 @@ const CourseDetail = () => {
               activeOpacity={0.8}
               onPressIn={handleBuyPressIn}
               onPressOut={handleBuyPressOut}
-              disabled={isBought} // Disable button if course is already bought
+              disabled={isBought}
             >
               <Text style={styles.buttonText}>{isBought ? 'Bought' : 'Buy Now'}</Text>
             </TouchableOpacity>
@@ -121,8 +142,6 @@ const CourseDetail = () => {
     </View>
   );
 };
-
-export default CourseDetail;
 
 const styles = StyleSheet.create({
   container: {
@@ -150,8 +169,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   image: {
-    width: '90%',
-    height: '90%',
+    width: '100%',
+    height: '100%',
     borderRadius: 20,
   },
   content: {
@@ -197,3 +216,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+export default CourseDetail;

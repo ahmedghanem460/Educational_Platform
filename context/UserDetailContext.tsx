@@ -5,6 +5,7 @@ interface UserDetails {
   email: string;
   password: string;
   uid: string;
+  displayName?: string;
 }
 
 interface UserDetailsContextProps {

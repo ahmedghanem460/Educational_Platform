@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Image as RNImage } from 'react-native';
 
 const courses = [
   {
@@ -22,16 +21,6 @@ const courses = [
     image: require('../../assets/images/js.jpg'),
     url: 'https://youtu.be/lfmg-EJ8gm4?si=yLN87XnqXTIYEq0b',
   },
-
-  // {
-  //   id: '3',
-  //   title: 'UI/UX Design in Arabic',
-  //   Channel: 'Mina Boules',
-  //   description: 'Master UI/UX design concepts in Arabic.',
-  //   price: '$125.00',
-  //   image: require('../../assets/images/uiux.jpg'),
-  //   url: 'https://youtube.com/playlist?list=PLmQ0KfqeaHAuud_Aav-94nfToArf6Uh4K&si=vJgznQUe-9Y22sVH',
-  // },
   {
     id: '3',
     title: 'Python in 100 Seconds',
@@ -110,9 +99,9 @@ const CourseListing = () => {
   const router = useRouter();
   const [search, setSearch] = React.useState('');
   const [filteredCourses, setFilteredCourses] = React.useState(courses);
+
   return (
     <View style={styles.container}>
-    
       <Text style={styles.title}>Course Listing</Text>
       <TextInput
         style={styles.searchBar}
@@ -126,11 +115,10 @@ const CourseListing = () => {
           setFilteredCourses(filtered);
         }}
       />
-
       <Text style={styles.resultsText}>
         {filteredCourses.length} results found
       </Text>
-      
+
       <FlatList
         data={filteredCourses}
         keyExtractor={(item) => item.id}
@@ -144,7 +132,7 @@ const CourseListing = () => {
                   title: item.title,
                   description: item.description,
                   price: item.price,
-                  image: RNImage.resolveAssetSource(item.image).uri,
+                  image: item.image, 
                   url: item.url,
                   channel: item.Channel,
                 },
