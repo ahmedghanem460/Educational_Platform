@@ -114,6 +114,12 @@ const Register = () => {
         <Pressable onPress={handleLogin}>
           <Text style={styles.link}>Already have an account? <Text style={{color:'#007bff'}}>Login</Text></Text>
         </Pressable>
+                <Pressable onPress={() => router.push('/(auth)/RegisterAdmin')} disabled={loading}>
+          <Text style={[styles.button, { borderColor: "white" }]}>
+            Want to register as <Text style={{ color: 'red' }}>Admin</Text>?
+          </Text>
+        </Pressable>
+        
       </KeyboardAvoidingView>
     </View>
   )
