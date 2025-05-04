@@ -51,6 +51,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@react-native-community/cli": "^18.0.0",
+    "@tsconfig/react-native": "^3.0.5",
     "@types/jest": "^29.5.14",
     "@types/jsdom": "^21.1.7",
     "@types/prop-types": "^15.7.14",
