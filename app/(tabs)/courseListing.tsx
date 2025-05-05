@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useCart } from '../../context/CartContext';
 
 const courses = [
   {
@@ -99,6 +100,20 @@ const CourseListing = () => {
   const router = useRouter();
   const [search, setSearch] = React.useState('');
   const [filteredCourses, setFilteredCourses] = React.useState(courses);
+  const { addToCart } = useCart();
+
+  const handleAddToCart = (course) => {
+    const courseToAdd = {
+      id: course.id,
+      name: course.title,
+      price: course.price,
+      image: course.image,
+      Channel: course.Channel,
+      quantity: 1
+    };
+    addToCart(courseToAdd);
+    alert('Course added to cart!');
+  };
 
   return (
     <View style={styles.container}>
@@ -149,12 +164,12 @@ const CourseListing = () => {
               <Text style={styles.description}>{item.description}</Text>
               <Text style={styles.price}>{item.price}</Text>
               <TouchableOpacity
-              style={[styles.button, { backgroundColor: '#28a745' }]}
-              activeOpacity={0.8}
-            
-            >
-              <Text style={styles.buttonText}>Add to cart</Text>
-            </TouchableOpacity>
+                style={[styles.button, { backgroundColor: '#28a745' }]}
+                activeOpacity={0.8}
+                onPress={() => handleAddToCart(item)}
+              >
+                <Text style={styles.buttonText}>Add to cart</Text>
+              </TouchableOpacity>
             </View>
           </TouchableOpacity>
         )}

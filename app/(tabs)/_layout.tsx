@@ -1,9 +1,10 @@
 import { Tabs, useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React, { useState } from "react";
+import React from "react";
 import { TouchableOpacity, Text, Alert, View } from "react-native";
 import { signOut } from "firebase/auth";
 import { FIREBASE_AUTH } from "../../config/FirebaseConfig";
+import { useCart } from "../../context/CartContext";
 
 // CustomHeader Component
 const CustomHeader = ({
@@ -74,12 +75,10 @@ const CustomHeader = ({
 
 export default function TabLayout() {
   const router = useRouter();
-
-  // You can make cartCount dynamic later; static for now
-  const [cartCount] = useState(3);
+  const { cartItems } = useCart();
 
   const goToCart = () => {
-    router.push("/cart"); // make sure /cart screen exists
+    router.push("/cart");
   };
 
   const handleLogout = async () => {
@@ -115,7 +114,7 @@ export default function TabLayout() {
           headerTitle: () => (
             <CustomHeader
               title="Home"
-              cartCount={cartCount}
+              cartCount={cartItems.length}
               goToCart={goToCart}
               handleLogout={handleLogout}
             />
@@ -137,7 +136,7 @@ export default function TabLayout() {
           headerTitle: () => (
             <CustomHeader
               title="About"
-              cartCount={cartCount}
+              cartCount={cartItems.length}
               goToCart={goToCart}
               handleLogout={handleLogout}
             />
@@ -157,7 +156,7 @@ export default function TabLayout() {
           headerTitle: () => (
             <CustomHeader
               title="Courses"
-              cartCount={cartCount}
+              cartCount={cartItems.length}
               goToCart={goToCart}
               handleLogout={handleLogout}
             />
@@ -177,7 +176,7 @@ export default function TabLayout() {
           headerTitle: () => (
             <CustomHeader
               title="Profile"
-              cartCount={cartCount}
+              cartCount={cartItems.length}
               goToCart={goToCart}
               handleLogout={handleLogout}
             />

@@ -23,10 +23,32 @@ const Register = () => {
   const signUp = async () => {
     setLoading(true)
     try {
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alert('Please enter a valid email address');
+        setLoading(false);
+        return;
+      }
+
+      // Validate password length
+      if (password.length < 9) {
+        alert('Password must be at least 9 characters long');
+        setLoading(false);
+        return;
+      }
+
+      // Validate password match
+      if (password !== confirmPassword) {
+        alert('Passwords do not match');
+        setLoading(false);
+        return;
+      }
+
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       alert('User registered successfully!')
       await saveUser(userCredential.user)
-      router.replace('/(tabs)/home') // Go to the main tabs after successful registration
+      router.replace('/(tabs)/home')
     } catch (error: any) {
       alert('Error registering: ' + error.message)
     } finally {
