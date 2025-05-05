@@ -5,16 +5,17 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage"; // Add this import
 
 // Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyDsYrZ0VRmM_qZfzPqw3RGvX_-uksZkZwQ",
-  authDomain: "cs303-9b4fb.firebaseapp.com",
-  projectId: "cs303-9b4fb",
-  storageBucket: "cs303-9b4fb.appspot.com", // You already have this
-  messagingSenderId: "499619527846",
-  appId: "1:499619527846:web:6a2d56ae954a745a024867",
-  measurementId: "G-Y06EVXBRCK"
+  apiKey: "AIzaSyCgDrRXdPTJfjPrO7m6GfJeSSafSFuTfIE",
+  authDomain: "eduplt.firebaseapp.com",
+  projectId: "eduplt",
+  storageBucket: "eduplt.firebasestorage.app",
+  messagingSenderId: "903410685927",
+  appId: "1:903410685927:web:835e97b410d6136c048f42",
+  measurementId: "G-WSD0LCB7EB"
 };
-
 // Initialize Firebase
 export const FIREBASE_APP = initializeApp(firebaseConfig);
 export const FIREBASE_AUTH = getAuth(FIREBASE_APP);

@@ -34,7 +34,7 @@ const Login = () => {
 
     
       if (isAdmin) {
-        router.replace('/adminDashboard'); 
+        router.replace('/Admin/AdminDashboard'); 
       } else {
         router.replace('/(tabs)/home'); 
       }
