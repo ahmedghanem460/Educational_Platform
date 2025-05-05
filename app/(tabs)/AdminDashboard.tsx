@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 
 const AdminDashboard = () => {
-  const router = useRouter(); // لتوجيه المستخدم
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
@@ -24,7 +24,7 @@ const AdminDashboard = () => {
   );
 };
 
-// الأنماط (styles)
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

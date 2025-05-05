@@ -9,7 +9,7 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false); // تحديد إذا كان المستخدم يسجل كأدمن
+  const [isAdmin, setIsAdmin] = useState(false);  
   const [loading, setLoading] = useState(false);
   const { setUserDetails } = useContext(UserDetailsContext);
   const auth = FIREBASE_AUTH;
@@ -21,22 +21,22 @@ const Login = () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // إعداد بيانات المستخدم التي سيتم تخزينها في الـ Context
+      
       const userData = {
         name: user.displayName || '',
         email: user.email || '',
         password,
         uid: user.uid,
-        role: isAdmin ? 'admin' : 'user', // هنا نحدد الدور بناءً على الحالة
+        role: isAdmin ? 'admin' : 'user', 
       };
 
       setUserDetails(userData);
 
-      // توجيه المستخدم حسب الدور
+    
       if (isAdmin) {
-        router.replace('/adminDashboard');  // توجيه الأدمن إلى لوحة التحكم
+        router.replace('/adminDashboard'); 
       } else {
-        router.replace('/(tabs)/home'); // توجيه المستخدم العادي إلى الصفحة الرئيسية
+        router.replace('/(tabs)/home'); 
       }
     } catch (error: any) {
       console.error('Error signing in:', error.code, error.message);
@@ -71,7 +71,7 @@ const Login = () => {
           <Text>{showPassword ? 'Hide Password' : 'Show Password'}</Text>
         </Pressable>
 
-        {/* اختيار تسجيل الدخول كأدمن */}
+       
         <View style={styles.switchContainer}>
           <Text>Login as Admin?</Text>
           <Switch value={isAdmin} onValueChange={setIsAdmin} />
