@@ -148,6 +148,13 @@ const CourseListing = () => {
               <Text style={styles.channel}>{item.Channel}</Text>
               <Text style={styles.description}>{item.description}</Text>
               <Text style={styles.price}>{item.price}</Text>
+              <TouchableOpacity
+              style={[styles.button, { backgroundColor: '#28a745' }]}
+              activeOpacity={0.8}
+            
+            >
+              <Text style={styles.buttonText}>Add to cart</Text>
+            </TouchableOpacity>
             </View>
           </TouchableOpacity>
         )}
@@ -210,6 +217,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 20,
     marginTop: 10,
+  },
+
+  button: {
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
+    width: '60%',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+    
   },
   resultsText: {
     fontSize: 14,

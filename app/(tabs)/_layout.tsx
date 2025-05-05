@@ -1,11 +1,87 @@
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React from "react";
+import React, { useState } from "react";
 import { TouchableOpacity, Text, Alert, View } from "react-native";
 import { signOut } from "firebase/auth";
 import { FIREBASE_AUTH } from "../../config/FirebaseConfig";
 
-const CustomHeader = ({ title }: { title: string }) => {
+// CustomHeader Component
+const CustomHeader = ({
+  title,
+  cartCount = 0,
+  goToCart,
+  handleLogout,
+}: {
+  title: string;
+  cartCount: number;
+  goToCart: () => void;
+  handleLogout: () => void;
+}) => {
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        
+        width: "200%",
+        paddingHorizontal: 10,
+      }}
+    >
+      <Text style={{  color: "#fff", fontSize: 20, fontFamily: "outfit-bold" }}>
+        {title}
+      </Text>
+
+      <View style={{  flexDirection: "row", alignItems: "center" }}>
+        <TouchableOpacity onPress={goToCart} style={{ marginRight: 15 }}>
+          <View>
+            <Ionicons name="cart-outline" size={24} color="#ffd33d" />
+            {cartCount > 0 && (
+              <View
+                style={{
+                  position: "absolute",
+                  right: -6,
+                  top: -6,
+                  backgroundColor: "red",
+                  borderRadius: 10,
+                  width: 16,
+                  height: 16,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "white",
+                    fontSize: 10,
+                    fontWeight: "bold",
+                  }}
+                >
+                  {cartCount}
+                </Text>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={handleLogout}>
+          <Text style={{ color: "#ff0000", fontSize: 18 }}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default function TabLayout() {
+  const router = useRouter();
+
+  // You can make cartCount dynamic later; static for now
+  const [cartCount] = useState(3);
+
+  const goToCart = () => {
+    router.push("/cart"); // make sure /cart screen exists
+  };
+
   const handleLogout = async () => {
     try {
       await signOut(FIREBASE_AUTH);
@@ -16,27 +92,6 @@ const CustomHeader = ({ title }: { title: string }) => {
     }
   };
 
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        width: "1020%",
-        paddingHorizontal: 15,
-      }}
-    >
-      <Text style={{ color: "#fff", fontSize: 20, fontFamily: "outfit-bold" }}>
-        {title}
-      </Text>
-      <TouchableOpacity onPress={handleLogout}>
-        <Text style={{ color: "#ff0000", fontSize: 18 }}>Logout</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
-
-export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
@@ -57,7 +112,14 @@ export default function TabLayout() {
               size={24}
             />
           ),
-          headerTitle: () => <CustomHeader title="Home" />,
+          headerTitle: () => (
+            <CustomHeader
+              title="Home"
+              cartCount={cartCount}
+              goToCart={goToCart}
+              handleLogout={handleLogout}
+            />
+          ),
         }}
       />
       <Tabs.Screen
@@ -72,7 +134,14 @@ export default function TabLayout() {
               size={24}
             />
           ),
-          headerTitle: () => <CustomHeader title="About" />,
+          headerTitle: () => (
+            <CustomHeader
+              title="About"
+              cartCount={cartCount}
+              goToCart={goToCart}
+              handleLogout={handleLogout}
+            />
+          ),
         }}
       />
       <Tabs.Screen
@@ -85,7 +154,14 @@ export default function TabLayout() {
               size={24}
             />
           ),
-          headerTitle: () => <CustomHeader title="Courses" />,
+          headerTitle: () => (
+            <CustomHeader
+              title="Courses"
+              cartCount={cartCount}
+              goToCart={goToCart}
+              handleLogout={handleLogout}
+            />
+          ),
         }}
       />
       <Tabs.Screen
@@ -98,7 +174,14 @@ export default function TabLayout() {
               size={24}
             />
           ),
-          headerTitle: () => <CustomHeader title="Profile" />,
+          headerTitle: () => (
+            <CustomHeader
+              title="Profile"
+              cartCount={cartCount}
+              goToCart={goToCart}
+              handleLogout={handleLogout}
+            />
+          ),
         }}
       />
     </Tabs>
