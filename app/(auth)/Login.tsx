@@ -86,12 +86,7 @@ const Login = () => {
             Don't have an account? <Text style={{ color: '#007bff' }}>Register</Text>
           </Text>
         </Pressable>
-        <Pressable onPress={() => router.push('/(auth)/RegisterAdmin')} disabled={loading}>
-          <Text style={[styles.button, { borderColor: 'white' }]}>
-            Want to register as <Text style={{ color: 'red' }}>Admin</Text>?
-          </Text>
-        </Pressable>
-
+      
         {loading && <ActivityIndicator size="large" color="#0000ff" />}
       </KeyboardAvoidingView>
     </View>
