@@ -1,23 +1,128 @@
-import React from "react";
-import { ScrollView, View, Text, TouchableOpacity, Image, StyleSheet, Dimensions } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ScrollView, View, Text, TouchableOpacity, Image, StyleSheet, Dimensions, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from '@expo/vector-icons';
-import { useCart } from '../context/CartContext';
+import { FIREBASE_DB } from "../config/FirebaseConfig";
+import { collection, getDocs } from 'firebase/firestore'; // Import Firestore methods
+import { doc, deleteDoc } from 'firebase/firestore';
 
 const { width } = Dimensions.get('window');
 
 type CartItem = {
   id: string;
   name: string;
-  price: string;
-  image: any;
-  Channel: string;
+  price: string; // Ensure this is a string from Firestore
+  image: string;
   quantity: number;
 };
 
 const Cart = () => {
   const router = useRouter();
-  const { cartItems, removeFromCart, getTotalPrice } = useCart();
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);  // State to hold cart items
+  const [totalPrice, setTotalPrice] = useState<number>(0);  // State to hold total price
+  const [loading, setLoading] = useState<boolean>(true);  // State to manage loading state
+  const [error, setError] = useState<string | null>(null);  // Error state for fetch failures
+
+  // Fetch cart items from Firestore
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      try {
+        setLoading(true);
+        const cartCollection = collection(FIREBASE_DB, "cart");
+        const cartSnapshot = await getDocs(cartCollection);
+
+        const cartData: CartItem[] = cartSnapshot.docs.map(doc => ({
+          id: doc.id,  // document id
+          name: doc.data().name,
+          price: doc.data().price,
+          image: doc.data().image,
+          quantity: doc.data().quantity,
+        }));
+
+        setCartItems(cartData);
+        calculateTotalPrice(cartData);  // Calculate total price after fetching cart data
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+        setError("Error fetching cart items.");
+        console.error("Error fetching cart items: ", error);
+      }
+    };
+
+    fetchCartItems();
+  }, []);
+
+  // Calculate total price of items in the cart
+  const calculateTotalPrice = (cartData: CartItem[]) => {
+    const total = cartData.reduce((acc, item) => {
+      // Initialize variables outside the if statement
+      let price = 0;
+      let quantity = 0;
+      
+      if (item && item.price !== undefined) {
+        // Handle price - convert to string first in case it's already a number
+        price = parseFloat(String(item.price).replace(/[^0-9.-]+/g, ''));
+        
+        // Handle quantity - ensure it's a number and default to 1 if not specified
+        quantity = typeof item.quantity === 'number' ? item.quantity : 
+                  (parseInt(String(item.quantity), 10) || 1);
+        
+        console.log(`Item: ${item.name}, Price: ${price}, Quantity: ${quantity}`);
+        console.log('item.price', item.price);
+        
+        // Only add to accumulator if both values are valid numbers
+        if (!isNaN(price) && !isNaN(quantity)) {
+          return acc + (price * quantity);
+        }
+      } else {
+        console.log('Skipping item with undefined price:', item);
+      }
+      
+      return acc;  // Return unchanged accumulator for invalid items
+    }, 0);
+    
+    console.log(`Total Price: ${total}`);
+    setTotalPrice(total);
+  };
+
+  // Remove item from cart (to be implemented in Firestore)
+  const removeFromCart = async (id: string) => {
+    try {
+      // Reference to the specific document you want to delete
+      const itemRef = doc(FIREBASE_DB, "cart", id);  // 'cart' is your collection name, 'id' is the document ID
+
+      // Delete the document from Firestore
+      await deleteDoc(itemRef);
+
+      // Update local state after deletion
+      setCartItems(prevItems => {
+        const updatedItems = prevItems.filter(item => item.id !== id);
+        calculateTotalPrice(updatedItems);  // Recalculate total price
+        return updatedItems;
+      });
+
+      alert(`Item with ID ${id} removed from cart`);
+    } catch (error) {
+      console.error("Error removing item from cart: ", error);
+      alert("There was an error removing the item from the cart.");
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#6C5CE7" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -46,13 +151,13 @@ const Cart = () => {
             {cartItems.map((item) => (
               <View key={item.id} style={styles.cartItem}>
                 <Image 
-                  source={typeof item.image === 'string' ? { uri: item.image } : item.image}
+                  source={{ uri: item.image }}
                   style={styles.itemImage}
                 />
                 <View style={styles.itemInfo}>
                   <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemChannel}>{item.Channel}</Text>
-                  <Text style={styles.itemPrice}>{item.price}</Text>
+                  <Text style={styles.itemPrice}>${item.price}</Text>
+                  <Text style={styles.itemQuantity}>Quantity: {item.quantity}</Text>
                 </View>
                 <TouchableOpacity 
                   onPress={() => removeFromCart(item.id)} 
@@ -68,11 +173,11 @@ const Cart = () => {
             <View style={styles.priceBreakdown}>
               <View style={styles.priceRow}>
                 <Text style={styles.priceLabel}>Subtotal</Text>
-                <Text style={styles.priceValue}>${getTotalPrice().toFixed(2)}</Text>
+                <Text style={styles.priceValue}>${totalPrice.toFixed(2)}</Text>
               </View>
               <View style={[styles.priceRow, styles.totalRow]}>
                 <Text style={styles.totalText}>Total</Text>
-                <Text style={styles.totalPrice}>${getTotalPrice().toFixed(2)}</Text>
+                <Text style={styles.totalPrice}>${totalPrice.toFixed(2)}</Text>
               </View>
             </View>
             <TouchableOpacity
@@ -80,7 +185,7 @@ const Cart = () => {
               onPress={() => router.push({
                 pathname: "/payment",
                 params: {
-                  totalAmount: getTotalPrice(),
+                  totalAmount: totalPrice,
                   items: JSON.stringify(cartItems)
                 }
               })}
@@ -186,15 +291,14 @@ const styles = StyleSheet.create({
     color: "#2D3436",
     marginBottom: 4,
   },
-  itemChannel: {
-    fontSize: 14,
-    color: "#636E72",
-    marginBottom: 6,
-  },
   itemPrice: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#6C5CE7",
+  },
+  itemQuantity: {
+    fontSize: 14,
+    color: "#636E72",
   },
   removeButton: {
     justifyContent: "center",
@@ -261,6 +365,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
+  },
+  errorText: {
+    fontSize: 18,
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
 
