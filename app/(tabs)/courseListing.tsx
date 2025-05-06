@@ -1,104 +1,91 @@
 import React from 'react';
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useCart } from '../../context/CartContext';
+import { FIREBASE_DB } from '../../config/FirebaseConfig';
+import { collection, addDoc, getDocs } from 'firebase/firestore'; // Import Firestore methods
 
-const courses = [
-  {
-    id: '1',
-    title: 'React Native Full Course',
-    Channel: 'freeCodeCamp.org',
-    description: 'A complete beginner course on React Native.',
-    price: '$25.00',
-    image: require('../../assets/images/react-native.jpg'),
-    url: 'https://youtu.be/sm5Y7Vtuihg?si=AjeOrFnWImxzEfpx',
-  },
-  {
-    id: '2',
-    title: 'JavaScript Full Course',
-    Channel: 'Bro Code',
-    description: 'Learn JavaScript from scratch in this full guide.',
-    price: '$55.00',
-    image: require('../../assets/images/js.jpg'),
-    url: 'https://youtu.be/lfmg-EJ8gm4?si=yLN87XnqXTIYEq0b',
-  },
-  {
-    id: '3',
-    title: 'Python in 100 Seconds',
-    Channel: 'Fireship',
-    description: 'Understand Python quickly in this short video.',
-    price: '$45.50',
-    image: require('../../assets/images/python.jpg'),
-    url: 'https://youtu.be/x7X9w_GIm1s?si=CvHePx9xrzLuOWAI',
-  },
-  { 
-    id: '4', 
-    title: 'Node.js and other topics in Arabic ', 
-    Channel: 'أكاديمية ترميز', 
-    description: 'Learn Node.js and other topics in Arabic.',
-    price: '$35.00',
-    image: require('../../assets/images/node-js.jpg'), 
-    url: 'https://youtu.be/LG7ff9TVWjM?si=JpvZ7cgEUPhH0gjC' 
-  },
-  { 
-    id: '5', 
-    title: 'Flutter in Arabic',
-    Channel: 'adham saber', 
-    description: 'Learn Flutter in Arabic.',
-    price: '$30.00',
-    image: require('../../assets/images/flutter.jpg'), 
-    url: 'https://youtu.be/D1Go5WAw6Z0?si=wx_YJu3dcMUrtvaD' 
-  },
-  {
-    id: '6', 
-    title: 'DevOps Tutorial for Beginners', 
-    Channel: 'edureka!', 
-    description: 'A complete guide to DevOps for beginners.',
-    price: '$40.00',
-    image: require('../../assets/images/dev-ops.jpg'), 
-    url: 'https://youtu.be/hQcFE0RD0cQ?si=chY_oyzG3E2Jh19m' 
-  },
-  { 
-    id: '7',  
-    title: 'Data Science Full Course for Beginners', 
-    Channel: 'Simplilearn', 
-    description: 'A complete guide to Data Science for beginners.',
-    price: '$50.00',
-    image: require('../../assets/images/data.jpg'), 
-    url: 'https://youtu.be/SJuR41tlE9k?si=LngPVyUbEPQJRX7M' 
-  },
-  { 
-    id: '8',  
-    title: 'Machine Learning with Python and Scikit', 
-    Channel: 'freeCodeCamp.org', 
-    description: 'Learn Machine Learning with Python and Scikit.',
-    price: '$60.00',
-    image: require('../../assets/images/machine.jpg'), 
-    url: 'https://youtu.be/hDKCxebp88A?si=pg6miE7swjWZrLHz' 
-  },
-  { 
-    id: '9', 
-    title: 'Cyber Security for Beginners', 
-    Channel: 'Google Career Certificates', 
-    description: 'A complete guide to Cyber Security for beginners.',
-    price: '$70.00',
-    image: require('../../assets/images/cyber.jpg'), 
-    url: 'https://youtu.be/_DVVNOGYtmU?si=fmurJTjrYB8m5SLN' 
-  },
-  { 
-    id: '10', 
-    title: 'Java Full Course for Beginners', 
-    Channel: 'Programming with Mosh', 
-    description: 'Learn Java from scratch in this full course.',
-    price: '$80.00',
-    image: require('../../assets/images/Java-Logo.jpg'), 
-    url: 'https://youtu.be/eIrMbAQSU34?si=F36kShbOHgNek5Kx' 
-  },
-];
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  price: string;
+  image: string | { uri: string };  // Image can be a string or a URI object
+  url: string;
+  Channel: string;
+}
 
 const CourseListing = () => {
   const router = useRouter();
   const [search, setSearch] = React.useState('');
-  const [filteredCourses, setFilteredCourses] = React.useState(courses);
+  const [courses, setCourses] = React.useState<Course[]>([]); // Renamed coursesFromDB to courses
+  const [filteredCourses, setFilteredCourses] = React.useState<Course[]>([]);
+  const { addToCart } = useCart();
+
+  // Fetch courses from Firestore
+  React.useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const coursesCollection = collection(FIREBASE_DB, 'courses');
+        const querySnapshot = await getDocs(coursesCollection);
+
+        const coursesData: Course[] = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          title: doc.data().title,
+          description: doc.data().description,
+          price: doc.data().price,
+          image: doc.data().image,
+          url: doc.data().url,
+          Channel: doc.data().Channel,
+        }));
+
+        setCourses(coursesData);  // Set the fetched courses to the 'courses' state
+        setFilteredCourses(coursesData);  // Set the filtered courses as well
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
+  // Handle search functionality
+  const handleSearch = (text: string) => {
+    setSearch(text);
+    const filtered = courses.filter((course) =>
+      course.title.toLowerCase().includes(text.toLowerCase())
+    );
+    setFilteredCourses(filtered);
+  };
+
+  // Handle add to cart action
+  const handleAddToCart = async (course: Course) => {
+    try {
+      // Create the course object to add to the cart collection
+      const courseToAdd = {
+        id: course.id,
+        name: course.title,
+        price: course.price,
+        image: course.image,
+        Channel: course.Channel,
+        quantity: 1, // Default quantity to 1, adjust as needed
+      };
+
+      // Reference to the "cart" collection in Firestore
+      const cartCollectionRef = collection(FIREBASE_DB, 'cart');
+
+      // Add the course to Firestore under the "cart" collection
+      await addDoc(cartCollectionRef, courseToAdd);
+
+      // Optionally, update your local cart context or state here
+      addToCart(courseToAdd);
+
+      alert('Course added to cart!');
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('There was an error adding the course to the cart.');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -107,13 +94,7 @@ const CourseListing = () => {
         style={styles.searchBar}
         placeholder="Search for courses..."
         value={search}
-        onChangeText={(text) => {
-          setSearch(text);
-          const filtered = courses.filter((course) =>
-            course.title.toLowerCase().includes(text.toLowerCase())
-          );
-          setFilteredCourses(filtered);
-        }}
+        onChangeText={handleSearch}
       />
       <Text style={styles.resultsText}>
         {filteredCourses.length} results found
@@ -132,7 +113,7 @@ const CourseListing = () => {
                   title: item.title,
                   description: item.description,
                   price: item.price,
-                  image: item.image, 
+                  image: item.image || require('../../assets/images/Basha El Balaaaad.jpg'),
                   url: item.url,
                   channel: item.Channel,
                 },
@@ -149,12 +130,12 @@ const CourseListing = () => {
               <Text style={styles.description}>{item.description}</Text>
               <Text style={styles.price}>{item.price}</Text>
               <TouchableOpacity
-              style={[styles.button, { backgroundColor: '#28a745' }]}
-              activeOpacity={0.8}
-            
-            >
-              <Text style={styles.buttonText}>Add to cart</Text>
-            </TouchableOpacity>
+                style={[styles.button, { backgroundColor: '#28a745' }]}
+                activeOpacity={0.8}
+                onPress={() => handleAddToCart(item)}
+              >
+                <Text style={styles.buttonText}>Add to cart</Text>
+              </TouchableOpacity>
             </View>
           </TouchableOpacity>
         )}
@@ -218,7 +199,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginTop: 10,
   },
-
   button: {
     paddingVertical: 12,
     paddingHorizontal: 30,
@@ -234,7 +214,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
-    
   },
   resultsText: {
     fontSize: 14,

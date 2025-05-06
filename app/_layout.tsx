@@ -1,10 +1,10 @@
-
 import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import { useEffect } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { SplashScreen } from "expo-router";
 import React from "react";
+import { CartProvider } from "../context/CartContext";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -34,5 +34,14 @@ export default function RootLayout() {
     );
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <CartProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="cart" options={{ headerShown: false }} />
+        <Stack.Screen name="payment" options={{ headerShown: false }} />
+        <Stack.Screen name="courseDetails" options={{ headerShown: false }} />
+      </Stack>
+    </CartProvider>
+  );
 }
