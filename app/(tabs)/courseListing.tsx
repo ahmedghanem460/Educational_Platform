@@ -3,14 +3,14 @@ import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput } 
 import { useRouter } from 'expo-router';
 import { useCart } from '../../context/CartContext';
 import { FIREBASE_DB } from '../../config/FirebaseConfig';
-import { collection, addDoc, getDocs } from 'firebase/firestore'; // Import Firestore methods
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 
 interface Course {
   id: string;
   title: string;
   description: string;
   price: string;
-  image: string | { uri: string };  // Image can be a string or a URI object
+  image: string | { uri: string };
   url: string;
   Channel: string;
 }
@@ -18,11 +18,10 @@ interface Course {
 const CourseListing = () => {
   const router = useRouter();
   const [search, setSearch] = React.useState('');
-  const [courses, setCourses] = React.useState<Course[]>([]); // Renamed coursesFromDB to courses
+  const [courses, setCourses] = React.useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = React.useState<Course[]>([]);
   const { addToCart } = useCart();
 
-  // Fetch courses from Firestore
   React.useEffect(() => {
     const fetchCourses = async () => {
       try {
@@ -39,8 +38,8 @@ const CourseListing = () => {
           Channel: doc.data().Channel,
         }));
 
-        setCourses(coursesData);  // Set the fetched courses to the 'courses' state
-        setFilteredCourses(coursesData);  // Set the filtered courses as well
+        setCourses(coursesData);
+        setFilteredCourses(coursesData);
       } catch (error) {
         console.error('Error fetching courses:', error);
       }
@@ -49,7 +48,6 @@ const CourseListing = () => {
     fetchCourses();
   }, []);
 
-  // Handle search functionality
   const handleSearch = (text: string) => {
     setSearch(text);
     const filtered = courses.filter((course) =>
@@ -58,26 +56,19 @@ const CourseListing = () => {
     setFilteredCourses(filtered);
   };
 
-  // Handle add to cart action
   const handleAddToCart = async (course: Course) => {
     try {
-      // Create the course object to add to the cart collection
       const courseToAdd = {
         id: course.id,
         name: course.title,
         price: course.price,
         image: course.image,
         Channel: course.Channel,
-        quantity: 1, // Default quantity to 1, adjust as needed
+        quantity: 1,
       };
 
-      // Reference to the "cart" collection in Firestore
       const cartCollectionRef = collection(FIREBASE_DB, 'cart');
-
-      // Add the course to Firestore under the "cart" collection
       await addDoc(cartCollectionRef, courseToAdd);
-
-      // Optionally, update your local cart context or state here
       addToCart(courseToAdd);
 
       alert('Course added to cart!');
