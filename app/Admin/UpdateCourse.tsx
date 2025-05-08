@@ -1,20 +1,49 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Alert,
+  Image,
+} from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import * as ImagePicker from 'expo-image-picker';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '../../config/FirebaseConfig';
 
 const UpdateCourse = () => {
   const [courseId, setCourseId] = useState('');
-  const [name, setName] = useState('');
-  const [link, setLink] = useState('');
-  const [category, setCategory] = useState('');
+  const [title, setTitle] = useState('');
+  const [url, setUrl] = useState('');
+  const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
+  const [image, setImage] = useState('');
+  const [channel, setChannel] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
+
+  const pickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission Required', 'You need to grant permission to access gallery');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
 
   const fetchCourse = async () => {
     if (!courseId.trim()) {
-      Alert.alert('Error', 'Please enter a Course ID');
+      Alert.alert('Error', 'Please enter a course ID');
       return;
     }
 
@@ -24,50 +53,55 @@ const UpdateCourse = () => {
 
       if (docSnap.exists()) {
         const data = docSnap.data();
-        setName(data.name);
-        setLink(data.link);
-        setCategory(data.category);
+        setTitle(data.title || '');
+        setUrl(data.url || '');
+        setPrice(data.price || '');
         setDescription(data.description || '');
+        setChannel(data.channel || '');
+        setImage(data.image || '');
         setIsLoaded(true);
-        Alert.alert('Loaded', 'Course data loaded successfully');
+        Alert.alert('Loaded', 'Course loaded successfully');
       } else {
-        Alert.alert('Error', 'Course not found');
+        Alert.alert('Not Found', 'Course not found with this ID');
       }
     } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Failed to load course');
+      console.log(error);
+      Alert.alert('Error', 'Something went wrong while fetching course');
     }
   };
 
   const handleUpdateCourse = async () => {
-    if (!name || !link || !category) {
-      Alert.alert('Error', 'Please fill in all fields');
+    if (!title || !url || !price || !image) {
+      Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
 
     try {
       const courseRef = doc(FIREBASE_DB, 'courses', courseId);
       await updateDoc(courseRef, {
-        name,
-        link,
-        category,
+        title,
+        url,
+        price,
         description,
+        image,
+        Channel: channel || 'Unknown Channel',
         updatedAt: new Date(),
       });
+
       Alert.alert('Success', 'Course updated successfully!');
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'Something went wrong');
+      Alert.alert('Error', 'Something went wrong while updating');
     }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.heading}>Update Course</Text>
 
       <TextInput
-        style={styles.input}
         placeholder="Enter Course ID"
+        style={styles.input}
         value={courseId}
         onChangeText={setCourseId}
       />
@@ -79,64 +113,148 @@ const UpdateCourse = () => {
       {isLoaded && (
         <>
           <TextInput
-            style={styles.input}
             placeholder="Course Name"
-            value={name}
-            onChangeText={setName}
+            style={styles.input}
+            value={title}
+            onChangeText={setTitle}
           />
           <TextInput
-            style={styles.input}
-            placeholder="Course Link"
-            value={link}
-            onChangeText={setLink}
-          />
+                  style={styles.input}
+                  placeholder="Course URL"
+                  value={url}
+                  onChangeText={setUrl}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Course Price"
+                  value={price}
+                  onChangeText={setPrice}
+                  keyboardType="numeric"
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Course Description"
+                  value={description}
+                  onChangeText={setDescription}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Image URL"
+                  placeholderTextColor="#888"
+                  value={image}
+                  onChangeText={setImage}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Channel Name"
+                  placeholderTextColor="#888"
+                  value={channel}
+                  onChangeText={setChannel}
+                />
 
-          <Text style={styles.label}>Select Category</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={category}
-              onValueChange={setCategory}
-              style={styles.picker}
-            >
-              <Picker.Item label="-- Choose Category --" value="" />
-              <Picker.Item label="Programming" value="Programming" />
-              <Picker.Item label="Mathematics" value="Mathematics" />
-              <Picker.Item label="Design" value="Design" />
-              <Picker.Item label="Business" value="Business" />
-            </Picker>
-          </View>
-
-          <Text style={styles.label}>Course Description</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Write Description"
-            value={description}
-            onChangeText={setDescription}
-          />
-
-          <Pressable style={styles.button} onPress={handleUpdateCourse}>
-            <Text style={styles.buttonText}>Update</Text>
+          <Pressable style={styles.updateButton} onPress={handleUpdateCourse}>
+            <Text style={styles.buttonText}>Update Course</Text>
           </Pressable>
         </>
       )}
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  heading: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  label: { fontSize: 16, marginBottom: 5 },
+  container: {
+    flex: 1,
+    backgroundColor: '#e6f0fa',
+    paddingHorizontal: 25,
+    paddingTop: 60,
+  },
+  heading: {
+    fontSize: 26,
+    fontWeight: '700',
+    textAlign: 'center',
+    color: '#1E90FF',
+    marginBottom: 30,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 5,
+    color: '#333',
+  },
   input: {
-    borderWidth: 1, borderColor: '#ccc', padding: 12, marginBottom: 15, borderRadius: 5,
+    backgroundColor: '#fff',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginBottom: 15,
+    fontSize: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   pickerContainer: {
-    borderWidth: 1, borderColor: '#ccc', borderRadius: 5, marginBottom: 15,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginBottom: 15,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  picker: { height: 50, width: '100%' },
-  button: { backgroundColor: '#28a745', padding: 15, borderRadius: 5, marginTop: 10 },
-  loadButton: { backgroundColor: '#007bff', padding: 15, borderRadius: 5, marginBottom: 10 },
-  buttonText: { color: '#fff', textAlign: 'center', fontSize: 16 },
+  picker: {
+    height: 50,
+    width: '100%',
+  },
+  button: {
+    backgroundColor: '#28a745',
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  loadButton: {
+    backgroundColor: '#1E90FF',
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  updateButton: {
+    backgroundColor: '#1E90FF',
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
 });
+
 
 export default UpdateCourse;

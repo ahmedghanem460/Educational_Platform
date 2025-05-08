@@ -20,9 +20,9 @@ const AdminDashboard = () => {
       <Pressable style={styles.button} onPress={() => router.push('/Admin/DeleteCourse')}>
         <Text style={styles.buttonText}>Delete Course</Text>
       </Pressable>
-      <Pressable style={styles.button} onPress={() => router.push('/Admin/RegisterAdmin')}>
+      {/* <Pressable style={styles.button} onPress={() => router.push('/Admin/RegisterAdmin')}>
         <Text style={styles.buttonText}>Add New Admin</Text>
-      </Pressable>
+      </Pressable> */}
 
       
     </View>

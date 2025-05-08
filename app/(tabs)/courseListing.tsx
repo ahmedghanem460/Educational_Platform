@@ -95,10 +95,11 @@ const CourseListing = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Course Listing</Text>
+      <Text style={styles.headerTitle}>Course Listing</Text>
       <TextInput
         style={styles.searchBar}
         placeholder="Search for courses..."
+        placeholderTextColor="#9E9E9E"
         value={search}
         onChangeText={handleSearch}
       />
@@ -142,9 +143,12 @@ const CourseListing = () => {
               <Text style={styles.description}>{item.description}</Text>
               <Text style={styles.price}>{item.price}</Text>
               <TouchableOpacity
-                style={[styles.button, { backgroundColor: '#28a745' }]}
+                style={styles.button}
                 activeOpacity={0.8}
-                onPress={() => handleAddToCart(item)}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleAddToCart(item);
+                }}
               >
                 <Text style={styles.buttonText}>Add to cart</Text>
               </TouchableOpacity>
@@ -161,76 +165,87 @@ export default CourseListing;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#f8f9fa',
+    padding: 16,
+    backgroundColor: '#121212', // Dark background
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 16,
+    textAlign: 'center',
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
+    backgroundColor: '#1E1E1E', // Dark card background
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   image: {
-    width: 70,
-    height: 70,
-    borderRadius: 10,
+    width: 80,
+    height: 80,
+    borderRadius: 8,
   },
   textContainer: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: 16,
   },
   title: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFFFFF', // White text
+    marginBottom: 4,
   },
   channel: {
     fontSize: 14,
-    color: '#888',
-    marginBottom: 4,
+    color: '#B0B0B0', // Light gray
+    marginBottom: 6,
   },
   description: {
     fontSize: 13,
-    color: '#666',
-    marginBottom: 6,
-  },
-  price: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#007bff',
+    color: '#A0A0A0', // Gray
     marginBottom: 8,
   },
+  price: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4CAF50', // Green
+    marginBottom: 12,
+  },
   searchBar: {
-    height: 40,
-    borderColor: '#ccc',
+    height: 48,
+    backgroundColor: '#1E1E1E',
+    borderColor: '#333',
     borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginBottom: 20,
-    marginTop: 10,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    color: '#FFFFFF',
+    fontSize: 16,
   },
   button: {
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 4,
-    width: '60%',
+    backgroundColor: '#2E7D32', // Dark green
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
   },
   resultsText: {
     fontSize: 14,
-    color: '#555',
-    marginBottom: 10,
+    color: '#9E9E9E',
+    marginBottom: 16,
     textAlign: 'center',
   },
 });

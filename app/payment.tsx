@@ -104,6 +104,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+    marginBlock:30,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -146,8 +147,7 @@ const styles = StyleSheet.create({
   totalAmount: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#28a745',
-  },
+    color: '#6C5CE7',  },
   formContainer: {
     backgroundColor: '#fff',
     padding: 15,
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   payButton: {
-    backgroundColor: '#28a745',
+    backgroundColor: '#6C5CE7',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',

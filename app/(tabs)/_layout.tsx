@@ -7,7 +7,6 @@ import { FIREBASE_AUTH } from "../../config/FirebaseConfig";
 import { useCart } from "../../context/CartContext";
 import { UserDetailsProvider } from '../../context/UserDetailContext';
 
-// CustomHeader Component
 const CustomHeader = ({
   title,
   cartCount = 0,
@@ -26,7 +25,7 @@ const CustomHeader = ({
         justifyContent: "space-between",
         alignItems: "center",
         
-        width: "200%",
+        width: "100%",
         paddingHorizontal: 10,
       }}
     >
@@ -64,10 +63,6 @@ const CustomHeader = ({
               </View>
             )}
           </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={handleLogout}>
-          <Text style={{ color: "#ff0000", fontSize: 18 }}>Logout</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -113,11 +108,12 @@ export default function TabLayout() {
             />
           ),
           headerTitle: () => (
-            <CustomHeader
+            <CustomHeader 
               title="Home"
               cartCount={cartItems.length}
               goToCart={goToCart}
               handleLogout={handleLogout}
+              
             />
           ),
         }}

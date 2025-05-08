@@ -1,24 +1,24 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, Text, Pressable, ActivityIndicator, ScrollView } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../config/FirebaseConfig';
 import { useRouter } from 'expo-router';
+import { useContext, useEffect, useState } from 'react';
 import userDetailsContext from '../context/UserDetailContext';
 import { doc, getDoc } from 'firebase/firestore';
 
 const PlaceholderImage = require('@/assets/images/photo.png');
 
-// ✅ Updated UserDetails interface to match what is in Register
 interface UserDetails {
-  uid: string;
   name: string;
   email: string;
-  role: 'user' | 'admin';
-  cartItems: any[];  
-  cartId: string;
-  createdAt: Date;
+  password: string;
+  uid: string;
+  role: string;
+  cartItems: any[];
 }
+
 
 export default function Index() {
   const router = useRouter();
@@ -27,158 +27,241 @@ export default function Index() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = FIREBASE_AUTH.onAuthStateChanged(async (user) => {
+    const unsubscribe = FIREBASE_AUTH.onAuthStateChanged((user) => {
       if (user) {
         const userDocRef = doc(FIREBASE_DB, 'users', user.uid);
-        try {
-          const docSnap = await getDoc(userDocRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            // ✅ Ensure correct structure is enforced manually
-            const userData: UserDetails = {
-              uid: user.uid,
-              name: data.name,
-              email: data.email,
-              role: data.role,
-              cartItems: data.cartItems || [],
-              cartId: data.cartId,
-              createdAt: data.createdAt.toDate ? data.createdAt.toDate() : new Date(), // handle Firestore Timestamp
-            };
-            setUserDetails(userData);
-            setIsAuthenticated(true);
-            router.replace('/home');
-          } else {
+        getDoc(userDocRef)
+          .then((doc) => {
+            if (doc.exists()) {
+              const userData = doc.data() as UserDetails;
+              setUserDetails({
+                ...userData,
+                role: userData.role || 'user',
+                cartItems: userData.cartItems || []
+              });
+              setIsAuthenticated(true);
+              router.replace('/home');
+            } else {
+              setIsAuthenticated(false);
+              setLoading(false);
+            }
+          })
+          .catch((error) => {
+            console.error('Error fetching user details:', error);
             setIsAuthenticated(false);
             setLoading(false);
-          }
-        } catch (error) {
-          console.error('Error fetching user details:', error);
-          setIsAuthenticated(false);
-          setLoading(false);
-        }
+          });
       } else {
         setIsAuthenticated(false);
         setLoading(false);
       }
     });
-
     return () => unsubscribe();
   }, []);
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#fff" />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4A90E2" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 0 }}>
-        <Text style={[styles.title, { fontFamily: 'outfit-bold' }]}>
-          Welcome to Our AI-Powered Educational Platform! 🤖📚
-        </Text>
-        <Text style={[styles.text, { fontFamily: 'outfit', marginBottom: 20 }]}>
-          Unlock your full learning potential with our intelligent and personalized educational experience.
-        </Text>
-        <View style={styles.feature}>
-          <FontAwesome name="lightbulb-o" size={30} color="#fff" style={styles.icon} />
-          <Text style={[styles.featureTitle, { fontFamily: 'outfit-bold' }]}>Personalized Learning Paths</Text>
-          <Text style={[styles.featureDescription, { fontFamily: 'outfit' }]}>
-            Our AI analyzes your learning style and progress to curate content tailored just for you.
+    <View style={styles.root}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.contentContainer}>
+          <Text style={styles.title}>
+            Welcome to Our AI-Powered Educational Platform! 🤖📚
           </Text>
-        </View>
-        <View style={styles.feature}>
-          <FontAwesome name="graduation-cap" size={30} color="#fff" style={styles.icon} />
-          <Text style={[styles.featureTitle, { fontFamily: 'outfit-bold' }]}>Intelligent Tutoring</Text>
-          <Text style={[styles.featureDescription, { fontFamily: 'outfit' }]}>
-            Get instant answers, detailed explanations, and helpful feedback from our AI tutor.
+          
+          <Text style={styles.subtitle}>
+            Unlock your full learning potential with our intelligent and personalized educational experience.
           </Text>
-        </View>
-        <View style={styles.imageContainer}>
-          <Image source={PlaceholderImage} style={styles.image} />
-        </View>
-        <Text style={[styles.callToAction, { marginTop: 30, fontFamily: 'outfit-bold' }]}>
-          Ready to transform your learning journey? Join us today! ⬇️
-        </Text>
 
-        <Pressable onPress={() => router.push('/Register')} style={{ marginTop: 12, alignSelf: 'center' }}>
-          <Text style={styles.link}>Get Started</Text>
-        </Pressable>
-        <Pressable onPress={() => router.push('/Login')} style={{ marginTop: 5, alignSelf: 'center' }}>
-          <Text style={styles.link}>Already have an account</Text>
-        </Pressable>
+          <View style={styles.featureCard}>
+            <FontAwesome name="lightbulb-o" size={28} color="#4A90E2" style={styles.featureIcon} />
+            <Text style={styles.featureTitle}>Personalized Learning Paths</Text>
+            <Text style={styles.featureText}>
+              Our AI analyzes your learning style and progress to curate content tailored just for you.
+            </Text>
+          </View>
+
+          <View style={styles.featureCard}>
+            <FontAwesome name="graduation-cap" size={28} color="#4A90E2" style={styles.featureIcon} />
+            <Text style={styles.featureTitle}>Intelligent Tutoring</Text>
+            <Text style={styles.featureText}>
+              Get instant answers, detailed explanations, and helpful feedback from our AI tutor.
+            </Text>
+          </View>
+
+          <View style={styles.imageWrapper}>
+            <Image 
+              source={PlaceholderImage} 
+              style={styles.image} 
+              contentFit="cover"
+            />
+          </View>
+
+          <Text style={styles.ctaText}>
+            Ready to transform your learning journey? Join us today! ⬇️
+          </Text>
+
+          <View style={styles.buttonsContainer}>
+            <Pressable 
+              onPress={() => router.push('/Register')} 
+              style={({ pressed }) => [
+                styles.primaryButton,
+                pressed && styles.buttonPressed
+              ]}
+            >
+              <Text style={styles.buttonText}>Get Started</Text>
+            </Pressable>
+            
+            <Pressable 
+              onPress={() => router.push('/Login')}
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                pressed && styles.buttonPressed
+              ]}
+            >
+              <Text style={styles.secondaryButtonText}>Already have an account</Text>
+            </Pressable>
+          </View>
+        </View>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#25292e',
-    alignItems: 'center',
+    backgroundColor: '#1A1A1A',
+  },
+  loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
-    padding: 30,
+    alignItems: 'center',
+    backgroundColor: '#1A1A1A',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
+  contentContainer: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 40,
+    paddingBottom: 20,
   },
   title: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: 24,
-    marginBottom: 20,
+    fontWeight: 'bold',
     textAlign: 'center',
+    marginBottom: 16,
+    fontFamily: 'outfit-bold',
+    lineHeight: 32,
   },
-  text: {
-    color: 'white',
+  subtitle: {
+    color: '#A0A0A0',
     fontSize: 16,
-    marginBottom: 15,
     textAlign: 'center',
-  },
-  feature: {
-    alignItems: 'center',
-    marginBottom: 25,
+    marginBottom: 32,
+    fontFamily: 'outfit',
+    lineHeight: 24,
     paddingHorizontal: 20,
   },
-  featureTitle: {
-    color: 'white',
-    fontSize: 20,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  featureDescription: {
-    color: 'gray',
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  imageContainer: {
+  featureCard: {
+    backgroundColor: '#252525',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    width: '100%',
     alignItems: 'center',
-    justifyContent: 'center',
+  },
+  featureIcon: {
+    marginBottom: 12,
+  },
+  featureTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    fontFamily: 'outfit-bold',
+    textAlign: 'center',
+  },
+  featureText: {
+    color: '#A0A0A0',
+    fontSize: 14,
+    textAlign: 'center',
+    fontFamily: 'outfit',
+    lineHeight: 20,
+  },
+  imageWrapper: {
+    borderRadius: 16,
+    overflow: 'hidden',
     marginVertical: 20,
+    width: '100%',
+    aspectRatio: 3/4,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
   image: {
-    width: 300,
-    height: 400,
-    borderRadius: 12,
+    width: '100%',
+    height: '100%',
   },
-  callToAction: {
-    color: 'white',
+  ctaText: {
+    color: '#FFFFFF',
     fontSize: 18,
-    marginTop: 25,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 24,
     textAlign: 'center',
+    fontFamily: 'outfit-bold',
   },
-  link: {
-    color: '#1e90ff',
-    marginTop: 20,
-    fontSize: 18,
-    fontFamily: 'outfit',
+  buttonsContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 8,
   },
-  learnMore: {
-    color: 'lightblue',
-    marginTop: 25,
+  primaryButton: {
+    backgroundColor: '#4A90E2',
+    width: '100%',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  secondaryButton: {
+    width: '100%',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'outfit-bold',
   },
-  icon: {
-    marginBottom: 10,
+  secondaryButtonText: {
+    color: '#4A90E2',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'outfit-bold',
+  },
+  buttonPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
   },
 });
-  

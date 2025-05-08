@@ -111,9 +111,9 @@ const CourseDetail = () => {
           <Text style={styles.description}>{description}</Text>
           <Text style={styles.price}>Price: {price}</Text>
 
-          <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: '#28a745' }]}
+          {/* <Animated.View style={{ transform: [{ scale: scaleAnim }] }}> */}
+            {/* <TouchableOpacity
+              style={[styles.button, { backgroundColor: isBought ? '#2E7D32' : '#28a745' }]}
               activeOpacity={0.8}
               onPressIn={handleBuyPressIn}
               onPressOut={handleBuyPressOut}
@@ -127,7 +127,7 @@ const CourseDetail = () => {
             style={[
               styles.button,
               {
-                backgroundColor: isBought ? '#007bff' : '#ccc',
+                backgroundColor: isBought ? '#1976D2' : '#607D8B',
                 marginTop: 15,
               },
             ]}
@@ -136,7 +136,7 @@ const CourseDetail = () => {
             disabled={!isBought}
           >
             <Text style={styles.buttonText}>Watch Now</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </ScrollView>
     </View>
@@ -146,7 +146,7 @@ const CourseDetail = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#1E1E1E', 
   },
   scrollContainer: {
     flexGrow: 1,
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
     height: 250,
-    backgroundColor: '#f1f1f1', 
+    backgroundColor: '#2D2D2D', 
     borderRadius: 20,
     marginBottom: 20,
     justifyContent: 'center',
@@ -182,22 +182,23 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
     textAlign: 'center',
+    color: '#FFFFFF', 
   },
   channel: {
     fontSize: 16,
-    color: '#666',
+    color: '#BDBDBD', 
     marginBottom: 10,
   },
   description: {
     fontSize: 15,
     textAlign: 'center',
     marginBottom: 10,
-    color: '#444',
+    color: '#E0E0E0', 
   },
   price: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#28a745',
+    color: '#4CAF50', 
     marginBottom: 20,
   },
   button: {
@@ -211,7 +212,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   buttonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 16,
   },

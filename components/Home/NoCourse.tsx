@@ -15,7 +15,7 @@ const NoCourse = () => {
   }
 
   return (
-    <View style={{flex:1, padding: 20}}>
+    <View style={{paddingHorizontal: 20}}>
       
       <View style={{
         // backgroundColor: '#1a1a1a',

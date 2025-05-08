@@ -214,22 +214,23 @@ const Profile = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f6f9fc',
+    backgroundColor: '#121212',
     padding: 20,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#121212',
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#1E1E1E',
     flexDirection: 'row',
     padding: 15,
     borderRadius: 16,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
     marginBottom: 20,
@@ -246,43 +247,43 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#333',
+    color: '#fff',
   },
   email: {
     fontSize: 14,
-    color: '#777',
+    color: '#bbb',
     marginBottom: 10,
   },
   btn: {
-    backgroundColor: '#eef1f4',
+    backgroundColor: '#2C2C2C',
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 8,
   },
   logoutBtn: {
-    backgroundColor: '#ffecec',
+    backgroundColor: '#3A1A1A',
   },
   btnText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333',
+    color: '#fff',
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 10,
-    color: '#333',
+    color: '#fff',
   },
   courseList: {
     paddingBottom: 20,
   },
   courseCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1E1E1E',
     padding: 15,
     borderRadius: 12,
     marginBottom: 12,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.2,
     shadowRadius: 3,
     elevation: 2,
     flexDirection: 'row',
@@ -290,7 +291,7 @@ const styles = StyleSheet.create({
   },
   courseTitle: {
     fontSize: 16,
-    color: '#333',
+    color: '#fff',
   },
   courseImage: {
     width: 60,
@@ -303,7 +304,7 @@ const styles = StyleSheet.create({
   },
   courseChannel: {
     fontSize: 14,
-    color: '#666',
+    color: '#bbb',
     marginTop: 5,
   },
   uploadOverlay: {
@@ -311,10 +312,11 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
 });
+
 
 export default Profile;

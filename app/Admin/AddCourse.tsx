@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, Alert } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '../../config/FirebaseConfig';
 
 const AddCourse = () => {
-  const [name, setName] = useState('');
-  const [link, setLink] = useState('');
-  const [category, setCategory] = useState('');
-  const [description, setdescription] = useState('');
+  const [title, setTitle] = useState('');
+  const [url, setUrl] = useState('');
+  const [price, setPrice] = useState('');
+  const [description, setDescription] = useState('');
+  const [image, setImage] = useState('');
+  const [channel, setChannel] = useState('');
 
   const handleAddCourse = async () => {
-    if (!name || !link || !category) {
+    if (!title || !url || !price || !image) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -22,19 +23,23 @@ const AddCourse = () => {
 
       await setDoc(courseRef, {
         courseId,
-        name,
-        link,
-        category,
+        title,
+        url,
+        price,
         description,
+        image,
+        Channel: channel || 'Unknown Channel',
         createdAt: new Date(),
       });
 
       Alert.alert('Success', 'Course added successfully');
 
-      setName('');
-      setLink('');
-      setCategory('');
-      setdescription('');
+      setTitle('');
+      setUrl('');
+      setPrice('');
+      setDescription('');
+      setImage('');
+      setChannel('');
     } catch (error) {
       Alert.alert('Error', 'Something went wrong');
       console.error(error);
@@ -47,39 +52,46 @@ const AddCourse = () => {
 
       <TextInput
         style={styles.input}
-        placeholder="Course Name"
-        value={name}
-        onChangeText={setName}
+        placeholder="Course Title"
+        placeholderTextColor="#888"
+        value={title}
+        onChangeText={setTitle}
       />
       <TextInput
         style={styles.input}
-        placeholder="Course Link"
-        value={link}
-        onChangeText={setLink}
+        placeholder="Course URL"
+        placeholderTextColor="#888"
+        value={url}
+        onChangeText={setUrl}
       />
-
-      <Text style={styles.label}>Select Category</Text>
-      <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={category}
-          onValueChange={(itemValue) => setCategory(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="-- Choose Category --" value="" />
-          <Picker.Item label="Programming" value="Programming" />
-          <Picker.Item label="Mathematics" value="Mathematics" />
-          <Picker.Item label="Design" value="Design" />
-          <Picker.Item label="Business" value="Business" />
-        </Picker>
-      </View>
-
-      <Text style={styles.label}>Course Description</Text>
       <TextInput
-        style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
-        placeholder="Write Description"
+        style={styles.input}
+        placeholder="Course Price"
+        placeholderTextColor="#888"
+        value={price}
+        onChangeText={setPrice}
+        keyboardType="numeric"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Course Description"
+        placeholderTextColor="#888"
         value={description}
-        onChangeText={setdescription}
-        multiline
+        onChangeText={setDescription}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Image URL"
+        placeholderTextColor="#888"
+        value={image}
+        onChangeText={setImage}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Channel Name"
+        placeholderTextColor="#888"
+        value={channel}
+        onChangeText={setChannel}
       />
 
       <Pressable style={styles.button} onPress={handleAddCourse}>
@@ -92,57 +104,48 @@ const AddCourse = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#e6f0fa',
+    paddingHorizontal: 25,
+    paddingTop: 60,
   },
   heading: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 30,
+    fontSize: 26,
+    fontWeight: '700',
     textAlign: 'center',
-    color: '#333',
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 8,
-    color: '#555',
+    color: '#1E90FF',
+    marginBottom: 30,
   },
   input: {
+    backgroundColor: '#fff',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#ccc',
-    padding: 14,
-    marginBottom: 20, 
-    borderRadius: 8,
-    backgroundColor: '#fff',
+    marginBottom: 15,
     fontSize: 16,
-    color: '#333',
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    backgroundColor: '#fff',
-    marginBottom: 20, 
-  },
-  picker: {
-    height: 50,
-    width: '100%',
-    color: '#333',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   button: {
     backgroundColor: '#1E90FF',
     paddingVertical: 16,
-    paddingHorizontal: 35,
-    borderRadius: 12,
-    marginTop: 20,
+    borderRadius: 16,
     alignItems: 'center',
-    elevation: 5,
+    marginTop: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
   },
   buttonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: 'bold',
   },
 });
 

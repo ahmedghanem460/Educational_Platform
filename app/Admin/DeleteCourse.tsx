@@ -34,7 +34,7 @@ const DeleteCourse = () => {
         onChangeText={setCourseId}
       />
 
-      <Pressable style={styles.deleteButton} onPress={handleDeleteCourse}>
+      <Pressable style={styles.button} onPress={handleDeleteCourse}>
         <Text style={styles.buttonText}>Delete Course</Text>
       </Pressable>
     </View>
@@ -42,13 +42,51 @@ const DeleteCourse = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  heading: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  input: {
-    borderWidth: 1, borderColor: '#ccc', padding: 12, marginBottom: 15, borderRadius: 5,
+  container: {
+    flex: 1,
+    backgroundColor: '#e6f0fa',
+    paddingHorizontal: 25,
+    paddingTop: 60,
   },
-  deleteButton: { backgroundColor: '#dc3545', padding: 15, borderRadius: 5 },
-  buttonText: { color: '#fff', textAlign: 'center', fontSize: 16 },
+  heading: {
+    fontSize: 26,
+    fontWeight: '700',
+    textAlign: 'center',
+    color: '#1E90FF',
+    marginBottom: 30,
+  },
+  input: {
+    backgroundColor: '#fff',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginBottom: 15,
+    fontSize: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  button: {
+    backgroundColor: '#1E90FF',
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
 });
 
 export default DeleteCourse;

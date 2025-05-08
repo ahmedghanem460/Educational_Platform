@@ -9,8 +9,10 @@ interface CartItem {
   quantity: number;
 }
 interface UserDetails {
+  role: string;
   name: string;
   email: string;
+  password?: string;
   uid: string;
   displayName?: string;
   cartItems: CartItem[];
