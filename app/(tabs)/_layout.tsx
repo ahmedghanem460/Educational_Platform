@@ -5,6 +5,7 @@ import { TouchableOpacity, Text, Alert, View } from "react-native";
 import { signOut } from "firebase/auth";
 import { FIREBASE_AUTH } from "../../config/FirebaseConfig";
 import { useCart } from "../../context/CartContext";
+import { UserDetailsProvider } from '../../context/UserDetailContext';
 
 // CustomHeader Component
 const CustomHeader = ({

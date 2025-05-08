@@ -1,35 +1,49 @@
-import React from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { View, StyleSheet, Text, Pressable, ActivityIndicator, ScrollView } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../config/FirebaseConfig';
 import { useRouter } from 'expo-router';
-import { useContext, useEffect, useState } from 'react';
 import userDetailsContext from '../context/UserDetailContext';
 import { doc, getDoc } from 'firebase/firestore';
 
 const PlaceholderImage = require('@/assets/images/photo.png');
+
+// ✅ Updated UserDetails interface to match what is in Register
 interface UserDetails {
+  uid: string;
   name: string;
   email: string;
-  password: string;
-  uid: string;
+  role: 'user' | 'admin';
+  cartItems: any[];  
+  cartId: string;
+  createdAt: Date;
 }
-// const logout = () => FIREBASE_AUTH.signOut();
 
 export default function Index() {
   const router = useRouter();
-  const {userDetails, setUserDetails} = useContext(userDetailsContext)
+  const { userDetails, setUserDetails } = useContext(userDetailsContext);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = FIREBASE_AUTH.onAuthStateChanged((user) => {
+    const unsubscribe = FIREBASE_AUTH.onAuthStateChanged(async (user) => {
       if (user) {
         const userDocRef = doc(FIREBASE_DB, 'users', user.uid);
-        getDoc(userDocRef).then((doc) => {
-          if (doc.exists()) {
-            const userData = doc.data() as UserDetails;
+        try {
+          const docSnap = await getDoc(userDocRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            // ✅ Ensure correct structure is enforced manually
+            const userData: UserDetails = {
+              uid: user.uid,
+              name: data.name,
+              email: data.email,
+              role: data.role,
+              cartItems: data.cartItems || [],
+              cartId: data.cartId,
+              createdAt: data.createdAt.toDate ? data.createdAt.toDate() : new Date(), // handle Firestore Timestamp
+            };
             setUserDetails(userData);
             setIsAuthenticated(true);
             router.replace('/home');
@@ -37,16 +51,17 @@ export default function Index() {
             setIsAuthenticated(false);
             setLoading(false);
           }
-        }).catch((error) => {
+        } catch (error) {
           console.error('Error fetching user details:', error);
           setIsAuthenticated(false);
           setLoading(false);
-        });
+        }
       } else {
         setIsAuthenticated(false);
         setLoading(false);
       }
     });
+
     return () => unsubscribe();
   }, []);
 
@@ -56,47 +71,47 @@ export default function Index() {
         <ActivityIndicator size="large" color="#fff" />
       </View>
     );
-  }  
-  
+  }
+
   return (
     <View style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 0 }}>
-          <Text style={[styles.title, { fontFamily: 'outfit-bold' }]}>
-              Welcome to Our AI-Powered Educational Platform! 🤖📚
+      <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 0 }}>
+        <Text style={[styles.title, { fontFamily: 'outfit-bold' }]}>
+          Welcome to Our AI-Powered Educational Platform! 🤖📚
+        </Text>
+        <Text style={[styles.text, { fontFamily: 'outfit', marginBottom: 20 }]}>
+          Unlock your full learning potential with our intelligent and personalized educational experience.
+        </Text>
+        <View style={styles.feature}>
+          <FontAwesome name="lightbulb-o" size={30} color="#fff" style={styles.icon} />
+          <Text style={[styles.featureTitle, { fontFamily: 'outfit-bold' }]}>Personalized Learning Paths</Text>
+          <Text style={[styles.featureDescription, { fontFamily: 'outfit' }]}>
+            Our AI analyzes your learning style and progress to curate content tailored just for you.
           </Text>
-          <Text style={[styles.text, { fontFamily: 'outfit', marginBottom: 20 }]}>
-              Unlock your full learning potential with our intelligent and personalized educational experience.
+        </View>
+        <View style={styles.feature}>
+          <FontAwesome name="graduation-cap" size={30} color="#fff" style={styles.icon} />
+          <Text style={[styles.featureTitle, { fontFamily: 'outfit-bold' }]}>Intelligent Tutoring</Text>
+          <Text style={[styles.featureDescription, { fontFamily: 'outfit' }]}>
+            Get instant answers, detailed explanations, and helpful feedback from our AI tutor.
           </Text>
-          <View style={styles.feature}>
-              <FontAwesome name="lightbulb-o" size={30} color="#fff" style={styles.icon} />
-              <Text style={[styles.featureTitle, { fontFamily: 'outfit-bold' }]}>Personalized Learning Paths</Text>
-              <Text style={[styles.featureDescription, { fontFamily: 'outfit' }]}>
-                  Our AI analyzes your learning style and progress to curate content tailored just for you.
-              </Text>
-          </View>
-          <View style={styles.feature}>
-              <FontAwesome name="graduation-cap" size={30} color="#fff" style={styles.icon} />
-              <Text style={[styles.featureTitle, { fontFamily: 'outfit-bold' }]}>Intelligent Tutoring</Text>
-              <Text style={[styles.featureDescription, { fontFamily: 'outfit' }]}>
-                  Get instant answers, detailed explanations, and helpful feedback from our AI tutor.
-              </Text>
-          </View>
-          <View style={styles.imageContainer}>
-              <Image source={PlaceholderImage} style={styles.image} />
-          </View>
-          <Text style={[styles.callToAction, { marginTop: 30, fontFamily: 'outfit-bold' }]}>
-              Ready to transform your learning journey? Join us today! ⬇️
-          </Text>
+        </View>
+        <View style={styles.imageContainer}>
+          <Image source={PlaceholderImage} style={styles.image} />
+        </View>
+        <Text style={[styles.callToAction, { marginTop: 30, fontFamily: 'outfit-bold' }]}>
+          Ready to transform your learning journey? Join us today! ⬇️
+        </Text>
 
-          <Pressable onPress={() => router.push('/Register')} style={{ marginTop: 12, alignSelf:'center' }}>
-            <Text style={styles.link}>Get Started</Text>  
-          </Pressable>
-          <Pressable onPress={() => router.push('/Login')} style={{ marginTop: 5, alignSelf:'center' }}>
-            <Text style={styles.link}>Already have an account</Text>
-          </Pressable>
-        </ScrollView>
+        <Pressable onPress={() => router.push('/Register')} style={{ marginTop: 12, alignSelf: 'center' }}>
+          <Text style={styles.link}>Get Started</Text>
+        </Pressable>
+        <Pressable onPress={() => router.push('/Login')} style={{ marginTop: 5, alignSelf: 'center' }}>
+          <Text style={styles.link}>Already have an account</Text>
+        </Pressable>
+      </ScrollView>
     </View>
-);
+  );
 }
 
 const styles = StyleSheet.create({
@@ -105,7 +120,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#25292e',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 30, 
+    padding: 30,
   },
   title: {
     color: 'white',
@@ -141,8 +156,8 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   image: {
-    width: 300, 
-    height: 400, 
+    width: 300,
+    height: 400,
     borderRadius: 12,
   },
   callToAction: {
@@ -166,3 +181,4 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 });
+  

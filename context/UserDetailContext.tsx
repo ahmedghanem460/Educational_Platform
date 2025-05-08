@@ -1,11 +1,19 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, ReactNode } from 'react';
 
+interface CartItem {
+  id: string;
+  userId: string;
+  name: string;
+  price: number;
+  image: string;
+  quantity: number;
+}
 interface UserDetails {
   name: string;
   email: string;
-  password: string;
   uid: string;
   displayName?: string;
+  cartItems: CartItem[];
 }
 
 interface UserDetailsContextProps {
@@ -13,19 +21,19 @@ interface UserDetailsContextProps {
   setUserDetails: React.Dispatch<React.SetStateAction<UserDetails | null>>;
 }
 
-const userDetailsContext = createContext<UserDetailsContextProps>({
+const UserDetailsContext = createContext<UserDetailsContextProps>({
   userDetails: null,
-  setUserDetails: () => {},
+  setUserDetails: () => {}, // Default value
 });
 
-export const UserDetailsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+export const UserDetailsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  let [userDetails, setUserDetails] = useState<UserDetails | null>(null);
 
   return (
-    <userDetailsContext.Provider value={{ userDetails, setUserDetails }}>
+    <UserDetailsContext.Provider value={{ userDetails, setUserDetails }}>
       {children}
-    </userDetailsContext.Provider>
+    </UserDetailsContext.Provider>
   );
 };
 
-export default userDetailsContext;
+export default UserDetailsContext;

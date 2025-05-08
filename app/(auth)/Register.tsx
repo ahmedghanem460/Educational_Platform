@@ -1,189 +1,224 @@
-import { View, Text, TextInput, ActivityIndicator, Pressable, StyleSheet, KeyboardAvoidingView } from 'react-native'
-import React, { useContext, useState } from 'react'
-import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/FirebaseConfig'
-import { createUserWithEmailAndPassword } from 'firebase/auth'
-import { useRouter } from 'expo-router'
-import { doc, setDoc } from 'firebase/firestore'
-import userDetailsContext from '../../context/UserDetailContext'
+import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/FirebaseConfig';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { useRouter } from 'expo-router';
+import UserDetailsContext from '../../context/UserDetailContext';
+
+// Import Picker from @react-native-picker/picker
+import { Picker } from '@react-native-picker/picker';
 
 const Register = () => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
-  const [name, setName] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const {userDetails, setUserDetails} = useContext(userDetailsContext)
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState('user');  // Default role is 'user'
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const auth = FIREBASE_AUTH;
+  const { setUserDetails } = useContext(UserDetailsContext);
   const router = useRouter();
 
+  // Updated Password Regex (at least 9 characters long, and any character mix)
+  const passwordRegex = /^.{9,}$/;
+
   const signUp = async () => {
-    setLoading(true)
+    if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+      alert('Please fill all fields.');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      alert('Invalid email address.');
+      return;
+    }
+
+    // Check password against regex
+    if (!passwordRegex.test(password)) {
+      alert('Password must be at least 9 characters long.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert('Passwords do not match.');
+      return;
+    }
+
+    setLoading(true);
     try {
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        alert('Please enter a valid email address');
-        setLoading(false);
-        return;
-      }
+      // Step 1: Create user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(FIREBASE_AUTH, email, password);
+      const user = userCredential.user;
 
-      // Validate password length
-      if (password.length < 9) {
-        alert('Password must be at least 9 characters long');
-        setLoading(false);
-        return;
-      }
+      // Generate cartId automatically using the user's UID
+      const cartId = `cart-${user.uid}`;
 
-      // Validate password match
-      if (password !== confirmPassword) {
-        alert('Passwords do not match');
-        setLoading(false);
-        return;
-      }
+      // Step 2: Create user document in Firestore with the user data
+      const userData = {
+        uid: user.uid,
+        name,
+        email,
+        role, // Role chosen by the user (either 'user' or 'admin')
+        cartItems: [],  // Initialize cartItems as an empty array
+        cartId, // Automatically generated cartId
+        createdAt: new Date(),
+      };
 
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-      alert('User registered successfully!')
-      await saveUser(userCredential.user)
-      router.replace('/(tabs)/home')
+      // Store user data in Firestore's 'users' collection
+      await setDoc(doc(FIREBASE_DB, 'users', user.uid), userData);
+
+      // Set user details in context (for future use in the app)
+      setUserDetails(userData);
+      console.log('User details set in context:', userData);
+
+      // Step 3: Reset form and redirect after successful registration
+      setEmail('');
+      setName('');
+      setPassword('');
+      setConfirmPassword('');
+      alert('User registered successfully!');
+      router.replace('/(tabs)/home');
     } catch (error: any) {
-      alert('Error registering: ' + error.message)
+      let errorMessage = 'Registration failed. Please try again.';
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'Email is already in use. Please choose another one.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak. Please choose a stronger one.';
+      }
+      alert(errorMessage);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
-  const saveUser = async (user: any) => {
-    const userData = {
-      name: name,
-      email: email,
-      password: password,
-      uid: user.uid,
-    }
-    await setDoc(doc(FIREBASE_DB, 'users', email), userData)
-    setUserDetails(userData)
-  }
-
-  const handleLogin = () => {
-    router.push('/(auth)/Login')
-  }
+  };
 
   return (
     <View style={styles.container}>
-      <KeyboardAvoidingView>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Text style={styles.title}>Register</Text>
 
         <TextInput
           style={styles.input}
-          placeholderTextColor="#888"
           placeholder="Name"
+          placeholderTextColor="#888"
           value={name}
           onChangeText={setName}
         />
         <TextInput
           style={styles.input}
-          placeholderTextColor="#888"
           placeholder="Email"
+          placeholderTextColor="#888"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
+          autoCapitalize="none"
         />
         <TextInput
           style={styles.input}
-          placeholderTextColor="#888"
           placeholder="Password"
+          placeholderTextColor="#888"
           value={password}
           onChangeText={setPassword}
           secureTextEntry={!showPassword}
         />
-
-        <Pressable onPress={() => setShowPassword(!showPassword)} style={{ marginBottom: 10 }}>
-          <Text>{showPassword ? 'Hide Password' : 'Show Password'}</Text>
+        <Pressable onPress={() => setShowPassword(!showPassword)}>
+          <Text style={styles.toggleText}>{showPassword ? 'Hide Password' : 'Show Password'}</Text>
         </Pressable>
 
         <TextInput
           style={styles.input}
-          placeholderTextColor="#888"
           placeholder="Confirm Password"
+          placeholderTextColor="#888"
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           secureTextEntry={!showConfirmPassword}
         />
-        
-        <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={{ marginBottom: 10 }}>
-          <Text>{showConfirmPassword ? 'Hide Password' : 'Show Password'}</Text>
+        <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+          <Text style={styles.toggleText}>{showConfirmPassword ? 'Hide Confirm Password' : 'Show Confirm Password'}</Text>
         </Pressable>
 
-        {error ? <Text style={{ color: 'red' }}>{error}</Text> : null}
-        {password !== confirmPassword && password.length > 0 && confirmPassword.length > 0 && (
-          <Text style={{ color: 'red' }}>Passwords do not match</Text>
-        )}
-        {password.length < 9 && password.length > 0 && (
-          <Text style={{ color: 'red' }}>Password must be at least 9 characters</Text>
-        )}
+        {/* Role Selection Dropdown */}
+        <Text style={styles.label}>Select Role:</Text>
+        <Picker
+          selectedValue={role}
+          onValueChange={(itemValue) => setRole(itemValue)}
+          style={styles.picker}
+        >
+          <Picker.Item label="User" value="user" />
+          <Picker.Item label="Admin" value="admin" />
+        </Picker>
 
         {loading ? (
           <ActivityIndicator size="large" color="#0000ff" />
         ) : (
-          <Pressable onPress={signUp} style={styles.button}>
-            <Text style={styles.buttonText}>Register</Text>
+          <Pressable style={styles.registerButton} onPress={signUp}>
+            <Text style={styles.registerButtonText}>Register</Text>
           </Pressable>
         )}
 
-        <Pressable onPress={handleLogin}>
-          <Text style={styles.link}>Already have an account? <Text style={{color:'#007bff'}}>Login</Text></Text>
+        <Pressable onPress={() => router.push('/(auth)/Login')}>
+          <Text style={styles.loginLink}>Already have an account? <Text style={{ color: '#007bff' }}>Login</Text></Text>
         </Pressable>
-                <Pressable onPress={() => router.push('/(auth)/RegisterAdmin')} disabled={loading}>
-          <Text style={[styles.button, { borderColor: "white" }]}>
-            Want to register as <Text style={{ color: 'red' }}>Admin</Text>?
-          </Text>
-        </Pressable>
-        
       </KeyboardAvoidingView>
     </View>
-  )
-}
+  );
+};
 
-export default Register
+export default Register;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
     backgroundColor: '#fff',
   },
   title: {
-    fontSize: 24,
-    marginBottom: 20,
+    fontSize: 28,
+    fontWeight: 'bold',
     textAlign: 'center',
+    marginBottom: 20,
   },
   input: {
-    height: 40,
+    height: 45,
     borderColor: '#ccc',
     borderWidth: 1,
-    marginBottom: 10,
+    marginBottom: 12,
     paddingHorizontal: 10,
+    borderRadius: 5,
   },
-  button: {
+  toggleText: {
+    marginBottom: 10,
+    color: '#007bff',
+    textAlign: 'right',
+  },
+  label: {
+    marginBottom: 10,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  picker: {
+    height: 45,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    marginBottom: 12,
+    borderRadius: 5,
+  },
+  registerButton: {
     backgroundColor: '#007bff',
-    padding: 10,
+    padding: 12,
     borderRadius: 5,
     marginBottom: 10,
   },
-  buttonText: {
-    color: '#fff',
+  registerButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
     textAlign: 'center',
   },
-  link: {
-    color: 'black',
+  loginLink: {
     textAlign: 'center',
     marginTop: 10,
-  },
-  div: {
-    borderRadius: 5,
   },
 });

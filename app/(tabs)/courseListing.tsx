@@ -4,16 +4,19 @@ import { useRouter } from 'expo-router';
 import { useCart } from '../../context/CartContext';
 import { FIREBASE_DB } from '../../config/FirebaseConfig';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import UserDetailsContext from '../../context/UserDetailContext';
 
 interface Course {
   id: string;
   title: string;
   description: string;
   price: string;
-  image: string | { uri: string };
+  image: string | { uri: string } | null;
   url: string;
   Channel: string;
 }
+
 
 const CourseListing = () => {
   const router = useRouter();
@@ -21,6 +24,8 @@ const CourseListing = () => {
   const [courses, setCourses] = React.useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = React.useState<Course[]>([]);
   const { addToCart } = useCart();
+
+  const currentUser = getAuth().currentUser;
 
   React.useEffect(() => {
     const fetchCourses = async () => {
@@ -33,7 +38,7 @@ const CourseListing = () => {
           title: doc.data().title,
           description: doc.data().description,
           price: doc.data().price,
-          image: doc.data().image,
+          image: doc.data().image ?? null,
           url: doc.data().url,
           Channel: doc.data().Channel,
         }));
@@ -57,26 +62,36 @@ const CourseListing = () => {
   };
 
   const handleAddToCart = async (course: Course) => {
+    if (!currentUser) {
+      alert('You must be logged in to add items to your cart.');
+      return;
+    }
+  
     try {
       const courseToAdd = {
         id: course.id,
+        userId: currentUser.uid,
         name: course.title,
-        price: course.price,
+        price: parseFloat(course.price),  // Ensure price is a number
         image: course.image,
         Channel: course.Channel,
-        quantity: 1,
+        quantity: 1,  // quantity will be added in CartContext logic
       };
-
-      const cartCollectionRef = collection(FIREBASE_DB, 'cart');
-      await addDoc(cartCollectionRef, courseToAdd);
+  
+      const userCartRef = collection(FIREBASE_DB, 'users', currentUser.uid, 'cart');
+      await addDoc(userCartRef, courseToAdd);
+  
+      // Now add the course to the context's cart
       addToCart(courseToAdd);
-
-      alert('Course added to cart!');
+  
+      alert('Course added to your cart!');
     } catch (error) {
       console.error('Error adding to cart:', error);
       alert('There was an error adding the course to the cart.');
     }
   };
+  
+ 
 
   return (
     <View style={styles.container}>
@@ -104,7 +119,7 @@ const CourseListing = () => {
                   title: item.title,
                   description: item.description,
                   price: item.price,
-                  image: item.image || require('../../assets/images/Basha El Balaaaad.jpg'),
+                  image: item.image as string,
                   url: item.url,
                   channel: item.Channel,
                 },
@@ -112,7 +127,13 @@ const CourseListing = () => {
             }
           >
             <Image
-              source={typeof item.image === 'string' ? { uri: item.image } : item.image}
+              source={
+                item.image
+                  ? (typeof item.image === 'string'
+                      ? { uri: item.image }
+                      : item.image)
+                  : require('../../assets/images/Basha El Balaaaad.jpg')
+              }
               style={styles.image}
             />
             <View style={styles.textContainer}>
