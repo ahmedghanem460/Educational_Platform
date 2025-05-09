@@ -26,10 +26,11 @@ interface Review {
   userId: string;
   userName: string;
   userEmail: string;
+  userPhotoURL?: string;
   rating: number;
   review: string;
   timestamp: Timestamp;
-  userProfile?: DocumentData;
+  authorProfile?: DocumentData;
 }
 
 const DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
@@ -61,6 +62,8 @@ const CourseDetail = () => {
   const [rating, setRating] = useState(0);
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [userExistingReviewId, setUserExistingReviewId] = useState<string | null>(null);
+  const [isUpdatingReview, setIsUpdatingReview] = useState(false);
 
   const user = FIREBASE_AUTH.currentUser;
   
@@ -73,13 +76,17 @@ const CourseDetail = () => {
           const docSnap = await getDoc(courseRef);
           if (docSnap.exists()) {
             setIsBought(true);
+          } else {
+            setIsBought(false);
           }
         } catch (error) {
           console.error("Error checking course status:", error);
+          setIsBought(false);
         } finally {
           setLoadingStatus(false);
         }
       } else {
+        setIsBought(false);
         setLoadingStatus(false);
       }
     };
@@ -88,37 +95,69 @@ const CourseDetail = () => {
 
   useEffect(() => {
     fetchReviews();
-  }, [title]);
+  }, [title, user]);
 
   const fetchReviews = async () => {
     if (!title) return;
     
     setLoadingReviews(true);
+
+    let foundUserReview = false;
+
     try {
       const reviewsRef = collection(FIREBASE_DB, 'courses', title, 'reviews');
       const q = query(reviewsRef, orderBy('timestamp', 'desc'));
       const querySnapshot = await getDocs(q);
       
       const reviewsData = await Promise.all(querySnapshot.docs.map(async (docSnapshot) => {
-        const reviewData = docSnapshot.data();
-        let userProfile: DocumentData | undefined = undefined;
-        try {
-          const userDoc = await getDoc(doc(FIREBASE_DB, 'users', reviewData.userId));
-          if (userDoc.exists()) {
-            userProfile = userDoc.data();
+        const reviewDataFromDb = docSnapshot.data();
+        let authorProfileData: DocumentData | undefined = undefined;
+        if (reviewDataFromDb.userId) {
+          try {
+            const userDoc = await getDoc(doc(FIREBASE_DB, 'users', reviewDataFromDb.userId));
+            if (userDoc.exists()) {
+              authorProfileData = userDoc.data();
+            }
+          } catch (error) {
+            console.error("Error fetching user profile for review:", error);
           }
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
         }
         
-        return {
+        const reviewItem: Review = {
           id: docSnapshot.id,
-          ...reviewData,
-          userProfile
-        } as Review;
+          userId: reviewDataFromDb.userId,
+          userName: reviewDataFromDb.userName,
+          userEmail: reviewDataFromDb.userEmail || '',
+          userPhotoURL: reviewDataFromDb.userPhotoURL || (typeof reviewDataFromDb.userProfile === 'object' && reviewDataFromDb.userProfile?.photoURL) || undefined,
+          rating: reviewDataFromDb.rating,
+          review: reviewDataFromDb.review,
+          timestamp: reviewDataFromDb.timestamp,
+          authorProfile: authorProfileData,
+        };
+
+        if (user && reviewItem.userId === user.uid) {
+          setUserReview(reviewItem.review);
+          setRating(reviewItem.rating);
+          setUserExistingReviewId(reviewItem.id);
+          setIsUpdatingReview(true);
+          foundUserReview = true;
+        }
+        return reviewItem;
       }));
       
       setReviews(reviewsData);
+
+      if (user && !foundUserReview && isUpdatingReview) { 
+        setUserReview(''); 
+        setRating(0); 
+        setIsUpdatingReview(false); 
+        setUserExistingReviewId(null);
+      } else if (user && !foundUserReview) { // Reset form if user has no review
+        setUserReview('');
+        setRating(0);
+        setIsUpdatingReview(false);
+        setUserExistingReviewId(null);
+      }
     } catch (error) {
       console.error("Error fetching reviews:", error);
     } finally {
@@ -206,44 +245,52 @@ const CourseDetail = () => {
 
     setSubmittingReview(true);
     try {
-      const reviewData = {
+
+      const reviewDataPayload = {
         userId: user.uid,
         userName: user.displayName || 'Anonymous',
-        userEmail: user.email,
-        userProfile: {
-          photoURL: user.photoURL || DEFAULT_AVATAR,
-        },
+        userEmail: user.email || '',
+        userPhotoURL: user.photoURL || DEFAULT_AVATAR,
         rating,
         review: userReview.trim(),
         timestamp: Timestamp.fromDate(new Date()),
       };
 
-      await addDoc(collection(FIREBASE_DB, 'courses', title, 'reviews'), reviewData);
-      setUserReview('');
-      setRating(0);
-      Alert.alert('Success', 'Review submitted successfully!');
-      fetchReviews();
+      if (isUpdatingReview && userExistingReviewId) {
+        const reviewRef = doc(FIREBASE_DB, 'courses', title, 'reviews', userExistingReviewId);
+        await setDoc(reviewRef, reviewDataPayload, { merge: true });
+        Alert.alert('Success', 'Review updated successfully!');
+      } else {
+        await addDoc(collection(FIREBASE_DB, 'courses', title, 'reviews'), reviewDataPayload);
+        Alert.alert('Success', 'Review submitted successfully!');
+      }
+      
+      if (!isUpdatingReview) { // Only clear form if it was a new submission
+          setUserReview('');
+          setRating(0);
+      }
+      fetchReviews(); 
     } catch (error) {
-      console.error("Error submitting review:", error);
-      Alert.alert('Error', 'Failed to submit review. Please try again.');
+      console.error("Error submitting/updating review:", error);
+      Alert.alert('Error', `Failed to ${isUpdatingReview ? 'update' : 'submit'} review. Please try again.`);
     } finally {
       setSubmittingReview(false);
     }
   };
 
-  const renderStars = (value: number, size: number = 20) => {
+  const renderStars = (currentRatingValue: number, size: number = 10, isInteractive: boolean = false) => {
     return (
       <View style={{ flexDirection: 'row' }}>
         {[1, 2, 3, 4, 5].map((star) => (
           <TouchableOpacity
             key={star}
-            onPress={() => setRating(star)}
-            disabled={submittingReview}
+            onPress={isInteractive ? () => setRating(star) : undefined}
+            disabled={!isInteractive || submittingReview}
           >
             <AntDesign
-              name={star <= value ? "star" : "staro"}
+              name={star <= currentRatingValue ? "star" : "staro"}
               size={size}
-              color={star <= value ? "#FFD700" : "#666"}
+              color={star <= currentRatingValue ? "#FFD700" : "#666"}
               style={{ marginRight: 2 }}
             />
           </TouchableOpacity>
@@ -266,8 +313,8 @@ const CourseDetail = () => {
           {loadingStatus
             ? 'Checking Status...'
             : isBought
-              ? 'Purchased'
-              : `Buy Now for ${price}`}
+            ? 'Purchased'
+            : `Buy Now for ${price}`}
         </Text>
       </TouchableOpacity>
     </Animated.View>
@@ -292,8 +339,7 @@ const CourseDetail = () => {
   const ReviewSection = () => (
     <View style={styles.reviewSection}>
       <Text style={styles.sectionTitle}>Reviews</Text>
-      
-      {isBought && (
+      {isBought && user && (
         <View style={styles.reviewForm}>
           <View style={styles.reviewerInfo}>
             <Image
@@ -309,11 +355,12 @@ const CourseDetail = () => {
             </Text>
           </View>
           <Text style={styles.reviewLabel}>Your Rating:</Text>
-          {renderStars(rating)}
+          {renderStars(rating, 20, true)}
           
           <TextInput
             style={styles.reviewInput}
             placeholder="Write your review..."
+            placeholderTextColor="#999"
             value={userReview}
             onChangeText={setUserReview}
             multiline
@@ -329,7 +376,9 @@ const CourseDetail = () => {
             {submittingReview ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Submit Review</Text>
+              <Text style={styles.buttonText}>
+                {isUpdatingReview ? 'Update Review' : 'Submit Review'}
+              </Text>
             )}
           </TouchableOpacity>
         </View>
@@ -341,29 +390,37 @@ const CourseDetail = () => {
         reviews.map((review) => (
           <View key={review.id} style={styles.reviewCard}>
             <View style={styles.reviewHeader}>
-              <View style={styles.reviewerInfo}>
+              {/* Corrected View for reviewer info within the card */}
+              <View style={[styles.reviewerInfo, { flex: 1, marginRight: 8, marginBottom: 0 }]}>
                 <Image
                   source={
-                    review.userProfile?.photoURL
-                      ? { uri: review.userProfile.photoURL }
+                    review.authorProfile?.photoURL
+                      ? { uri: review.authorProfile.photoURL }
+                      : review.userPhotoURL 
+                      ? { uri: review.userPhotoURL }
                       : { uri: DEFAULT_AVATAR }
                   }
                   style={styles.reviewerAvatar}
                 />
                 <View style={styles.reviewerDetails}>
-                  <Text style={styles.reviewerName}>{review.userName}</Text>
+                  <Text style={styles.reviewerName} numberOfLines={1} ellipsizeMode="tail">{review.userName}</Text>
                   <Text style={styles.reviewDate}>
                     {review.timestamp.toDate().toLocaleDateString()}
                   </Text>
                 </View>
               </View>
-              {renderStars(review.rating, 16)}
+              {renderStars(review.rating, 16, false)}
             </View>
             <Text style={styles.reviewText}>{review.review}</Text>
           </View>
         ))
       ) : (
-        <Text style={styles.noReviews}>No reviews yet. Be the first to review!</Text>
+        !isBought && user && <Text style={styles.noReviews}>Purchase the course to leave a review or see other reviews.</Text> 
+      )}
+      {!user && <Text style={styles.noReviews}>Login to see and submit reviews.</Text>}
+      {isBought && user && reviews.length === 0 && !loadingReviews && (
+          <Text style={styles.noReviews}>No reviews yet. Be the first to review!</Text>
+
       )}
     </View>
   );
@@ -433,7 +490,7 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
+    // justifyContent: 'center', // Can remove if content is long
     alignItems: 'center',
     padding: 20,
   },
@@ -460,7 +517,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
   },
-  title: {
+  title: { // This style is defined but not used in the current JSX
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 8,
@@ -481,7 +538,7 @@ const styles = StyleSheet.create({
     color: '#E0E0E0',
     width: '100%',
   },
-  price: {
+  price: { // This style is defined but not used in the current JSX
     fontSize: 16,
     fontWeight: 'bold',
     color: '#4CAF50',
@@ -564,13 +621,13 @@ const styles = StyleSheet.create({
   reviewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'flex-start', // Align to top for potentially multi-line names
     marginBottom: 10,
   },
-  reviewerInfo: {
+  reviewerInfo: { // Shared style for reviewer info block (avatar + name/date)
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
+    alignItems: 'center', 
+    marginBottom: 15, // Primarily for the review form layout
   },
   reviewerAvatar: {
     width: 40,
@@ -578,8 +635,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: 10,
   },
-  reviewerDetails: {
-    flex: 1,
+  reviewerDetails: { // Container for name and date
+    flexShrink: 1, // Allow this container to shrink if name is long, helps with wrapping
   },
   reviewerName: {
     color: '#FFFFFF',
@@ -601,10 +658,13 @@ const styles = StyleSheet.create({
     color: '#888888',
     textAlign: 'center',
     fontStyle: 'italic',
+    marginVertical: 10,
+
   },
   loader: {
     marginVertical: 20,
   },
 });
 
-export default CourseDetail;
+export default CourseDetail;
+

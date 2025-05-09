@@ -132,6 +132,7 @@ const Payment = () => {
         <TextInput
           style={styles.input}
           placeholder="Card Number"
+          placeholderTextColor="#888"
           value={cardNumber}
           onChangeText={setCardNumber}
           keyboardType="numeric"
@@ -140,6 +141,7 @@ const Payment = () => {
         <TextInput
           style={styles.input}
           placeholder="MM/YY"
+          placeholderTextColor="#888"
           value={expiryDate}
           onChangeText={setExpiryDate}
           maxLength={5}
@@ -147,6 +149,7 @@ const Payment = () => {
         <TextInput
           style={styles.input}
           placeholder="CVV"
+          placeholderTextColor="#888"
           value={cvv}
           onChangeText={setCvv}
           keyboardType="numeric"
@@ -156,6 +159,7 @@ const Payment = () => {
         <TextInput
           style={styles.input}
           placeholder="Name on Card"
+          placeholderTextColor="#888"
           value={name}
           onChangeText={setName}
         />
