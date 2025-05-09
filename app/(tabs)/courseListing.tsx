@@ -1,9 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { View, Text, FlatList, Animated, Image, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '../../context/CartContext';
 import { FIREBASE_DB } from '../../config/FirebaseConfig';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, query, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 interface Course {
@@ -24,41 +24,62 @@ const CourseListing = () => {
   const [courses, setCourses] = React.useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = React.useState<Course[]>([]);
   const { addToCart } = useCart();
+  const [userCourses, setUserCourses] = React.useState<string[]>([]); // Store the IDs of the courses the user has already bought
   const currentUser = getAuth().currentUser;
 
-  React.useEffect(
-    React.useCallback(() => {
-      const fetchCourses = async () => {
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const coursesCollection = collection(FIREBASE_DB, 'courses');
+        const querySnapshot = await getDocs(coursesCollection);
+
+        const coursesData: Course[] = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          
+          // Clean up the price string
+          const cleanedPrice = typeof data.price === 'string'
+            ? data.price.replace(/^\$/, '').trim()
+            : data.price;
+
+          return {
+            id: doc.id,
+            title: data.title,
+            description: data.description,
+            price: cleanedPrice,
+            image: data.image,
+            url: data.url,
+            Channel: data.Channel,
+            status: data.status || 'available',
+          };
+        });
+
+        const availableCourses = coursesData.filter(course => course.status !== 'bought');
+        setCourses(availableCourses);
+        setFilteredCourses(availableCourses);
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+      }
+    };
+
+    // Fetch the user's purchased courses
+    const fetchUserCourses = async () => {
+      if (currentUser) {
         try {
-          const coursesCollection = collection(FIREBASE_DB, 'courses');
-          const querySnapshot = await getDocs(coursesCollection);
+          const userDocRef = doc(FIREBASE_DB, 'users', currentUser.uid);
+          const userCartCollectionRef = collection(userDocRef, 'yourCourses');
+          const querySnapshot = await getDocs(userCartCollectionRef);
 
-          const coursesData: Course[] = querySnapshot.docs.map((doc) => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              title: data.title,
-              description: data.description,
-              price: data.price,
-              image: data.image,
-              url: data.url,
-              Channel: data.Channel,
-              status: data.status || 'available',
-            };
-          });
-
-          const availableCourses = coursesData.filter(course => course.status !== 'bought');
-          setCourses(availableCourses);
-          setFilteredCourses(availableCourses);
+          const purchasedCourseIds = querySnapshot.docs.map(doc => doc.id); // Get the course IDs
+          setUserCourses(purchasedCourseIds);
         } catch (error) {
-          console.error('Error fetching courses:', error);
+          console.error('Error fetching user cart:', error);
         }
-      };
+      }
+    };
 
-      fetchCourses();
-    }, [])
-  );
-
+    fetchCourses();
+    fetchUserCourses();
+  }, [currentUser]);
 
   const handleSearch = (text: string) => {
     setSearch(text);
@@ -73,6 +94,12 @@ const CourseListing = () => {
       alert('You already purchased this course.');
       return;
     }
+
+    if (!currentUser) {
+      alert('You need to be logged in to add courses to cart.');
+      return;
+    }
+
     try {
       const courseToAdd = {
         id: course.id,
@@ -81,10 +108,27 @@ const CourseListing = () => {
         image: course.image,
         Channel: course.Channel,
         quantity: 1,
-        userId: currentUser?.uid ?? '',
+        userId: currentUser.uid,
       };
-      const cartCollectionRef = collection(FIREBASE_DB, 'cart');
-      await addDoc(cartCollectionRef, courseToAdd);
+      console.log('Course to add:', courseToAdd);
+
+      // Reference to user's cart subcollection
+      const userDocRef = doc(FIREBASE_DB, 'users', currentUser.uid);
+      const userCartCollectionRef = collection(userDocRef, 'cart');
+
+      // Check if course already exists in cart (prevent duplicate)
+      const q = query(userCartCollectionRef, where('id', '==', course.id));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        alert('This course is already in your cart.');
+        return;
+      }
+
+      // Add course to user's cart subcollection
+      await addDoc(userCartCollectionRef, courseToAdd);
+
+      // Update local cart context
       addToCart(courseToAdd);
 
       alert('Course added to cart!');
@@ -96,7 +140,6 @@ const CourseListing = () => {
 
   return (
     <View style={styles.container}>
-      {/* <Text style={styles.title}>Course Listing</Text> */}
       <TextInput
         style={styles.searchBar}
         placeholder="Search for courses..."
@@ -106,7 +149,7 @@ const CourseListing = () => {
         onChangeText={handleSearch}
       />
       <Text style={styles.resultsText}>
-        {filteredCourses.length} results fdound
+        {filteredCourses.length} results found
       </Text>
 
       <FlatList
@@ -139,13 +182,14 @@ const CourseListing = () => {
               <Text style={styles.description}>{item.description}</Text>
               <Text style={styles.price}>{item.price}</Text>
               <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-                {item.status === 'bought' ? (
+                {userCourses.includes(item.id) ? (
                   <Text style={styles.boughtLabel}>Bought</Text>
                 ) : (
                   <TouchableOpacity
                     style={[styles.button, { backgroundColor: '#28a745' }]}
                     activeOpacity={0.8}
                     onPress={() => handleAddToCart(item)}
+                    disabled={userCourses.includes(item.id)} // Disable button if course is bought
                   >
                     <Text style={styles.buttonText}>Add to cart</Text>
                   </TouchableOpacity>
@@ -165,18 +209,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#121212', 
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 16,
-    textAlign: 'center',
+    backgroundColor: '#121212',
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: '#1E1E1E', // Dark card background
+    backgroundColor: '#1E1E1E',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -199,23 +236,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFFFFF', // White text
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   channel: {
     fontSize: 14,
-    color: '#B0B0B0', // Light gray
+    color: '#B0B0B0',
     marginBottom: 6,
   },
   description: {
     fontSize: 13,
-    color: '#A0A0A0', // Gray
+    color: '#A0A0A0',
     marginBottom: 8,
   },
   price: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#4CAF50', // Green
+    color: '#4CAF50',
     marginBottom: 12,
   },
   searchBar: {
@@ -230,8 +267,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   boughtLabel: {
-    backgroundColor: '#555',  // dark grey to indicate it's inactive
-    color: '#ccc',            // light text to contrast the dark background
+    backgroundColor: '#555',
+    color: '#ccc',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 6,
@@ -240,7 +277,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   button: {
-    backgroundColor: '#2E7D32', // Dark green
+    backgroundColor: '#2E7D32',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 6,

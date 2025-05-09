@@ -7,7 +7,7 @@ import { FIREBASE_AUTH } from "../../config/FirebaseConfig";
 import { useCart } from "../../context/CartContext";
 import { UserDetailsProvider } from '../../context/UserDetailContext';
 
-const CustomHeader = ({
+export const CustomHeader = ({
   title,
   cartCount = 0,
   goToCart,

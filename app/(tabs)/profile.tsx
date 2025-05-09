@@ -356,7 +356,7 @@ const Profile = () => {
           console.log("Profile.js: User document not found in Firestore for UID:", currentUser.uid);
         }
 
-        const coursesRef = collection(FIREBASE_DB, 'users', currentUser.uid, 'courses');
+        const coursesRef = collection(FIREBASE_DB, 'users', currentUser.uid, 'yourCourses');
         const courseQuerySnapshot = await getDocs(coursesRef);
         const userCourses = courseQuerySnapshot.docs.map(doc => ({
           id: doc.id,
@@ -584,8 +584,8 @@ const Profile = () => {
               style={styles.courseImage}
             />
             <View style={styles.courseInfo}>
-              <Text style={styles.courseTitle}>{item.title || 'Unnamed Course'}</Text>
-              <Text style={styles.courseChannel}>{item.channel || 'Unknown Channel'}</Text>
+              <Text style={styles.courseTitle}>{item.name || 'Unnamed Course'}</Text>
+              <Text style={styles.courseChannel}>{item.Channel || 'Unknown Channel'}</Text>
             </View>
           </TouchableOpacity>
         )}

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { updateDoc, doc as firestoreDoc } from 'firebase/firestore';
-import { collection, getDocs, deleteDoc, setDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, setDoc } from 'firebase/firestore';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../config/FirebaseConfig';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { CustomHeader } from './(tabs)/_layout';
+import { useCart } from '../context/CartContext';
+
 const Payment = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -12,6 +14,7 @@ const Payment = () => {
   const [cvv, setCvv] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+
   const totalAmount = params.totalAmount ? parseFloat(params.totalAmount as string) : 0;
   const items = params.items ? JSON.parse(params.items as string) : [];
 
@@ -22,9 +25,15 @@ const Payment = () => {
     }
     setLoading(true);
     try {
-      await clearCart();
-      await markCoursesAsBought();
-
+      // Step 1: Add the cart items to 'yourCourses' first
+      await addItemsToYourCoursesFromCart();
+  
+      // Step 2: Clear the user's cart
+      await clearUserCart();
+  
+      // Step 3: Navigate to the profile page
+      router.replace('/(tabs)/profile');
+  
       Alert.alert(
         'Payment Successful',
         'Thank you for your purchase!',
@@ -32,53 +41,75 @@ const Payment = () => {
           {
             text: 'OK',
             onPress: () => {
-              // Clear cart and navigate to home
-              router.replace('/(tabs)/home');
+              router.replace('/(tabs)/profile'); // Redirect to profile
             },
           },
         ]
       );
     } catch (error) {
-      Alert.alert("Error", "Something went wrong during payment")
+      console.error('Payment error:', error);
+      Alert.alert('Error', 'Something went wrong during payment');
     } finally {
       setLoading(false);
     }
   };
-  const clearCart = async () => {
-    try {
-      const cartCollection = collection(FIREBASE_DB, "cart");
-      const cartSnapshot = await getDocs(cartCollection);
-      const deletePromises = cartSnapshot.docs.map((docSnap) => deleteDoc(doc(FIREBASE_DB, "cart", docSnap.id)));
-      await Promise.all(deletePromises);
-      console.log("Cart cleared after payment.");
-    } catch (err) {
-      console.error("Error clearing cart:", err);
-    }
-  };
-  const markCoursesAsBought = async () => {
+  
+  const addItemsToYourCoursesFromCart = async () => {
     try {
       const user = FIREBASE_AUTH.currentUser;
       if (!user) return;
-
-      for (const item of items) {
-        // const courseRef = firestoreDoc(FIREBASE_DB, 'courses', item.id);
-        // await updateDoc(courseRef, { status: 'bought' });
-        const userCourseRef = firestoreDoc(FIREBASE_DB, 'users', user.uid, 'courses', item.id);
-        await setDoc(userCourseRef, {
-          title: item.title ?? "Untitled course",
-          description: item.description ?? "No description available",
-          image: item.image ?? "",
-          price: item.price ?? 0,
-          url: item.url ?? "",
-          channel: item.channel ?? "",
-          boughtAt: new Date(),
-        });
+  
+      const userCartRef = collection(FIREBASE_DB, 'users', user.uid, 'cart');
+      const snapshot = await getDocs(userCartRef);
+  
+      if (snapshot.empty) {
+        console.log('No items in the cart.');
+        return;
       }
-      console.log('Courses marked as bought.');
+  
+      const yourCoursesRef = collection(FIREBASE_DB, 'users', user.uid, 'yourCourses');
+  
+      // Process each item from the cart and add to yourCourses
+      const addPromises = snapshot.docs.map((docSnap) => {
+        const item = docSnap.data();
+  
+        if (!item.id) {
+          console.error('Item ID is missing:', item);
+          // If ID is missing, generate a fallback ID
+          item.id = docSnap.id; // Use the Firestore document ID as the fallback ID
+        }
+  
+        console.log('Adding item to yourCourses:', item);
+        return setDoc(doc(yourCoursesRef, item.id), { ...item, purchasedAt: new Date() });
+      });
+  
+      await Promise.all(addPromises);
+      console.log('Items from cart added to yourCourses.');
     } catch (error) {
-      console.error('Erorr making course as bought', error);
+      console.error('Error adding items to yourCourses:', error);
     }
   };
+  
+  const clearUserCart = async () => {
+    try {
+      const user = FIREBASE_AUTH.currentUser;
+      if (!user) return;
+  
+      const userCartRef = collection(FIREBASE_DB, 'users', user.uid, 'cart');
+      const snapshot = await getDocs(userCartRef);
+  
+      const deletePromises = snapshot.docs.map((docSnap) =>
+        deleteDoc(doc(FIREBASE_DB, 'users', user.uid, 'cart', docSnap.id))
+      );
+  
+      await Promise.all(deletePromises);
+      console.log('User cart cleared.');
+    } catch (error) {
+      console.error('Error clearing user cart:', error);
+    }
+  };
+  
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Payment Details</Text>
@@ -130,11 +161,14 @@ const Payment = () => {
         />
       </View>
 
-      <TouchableOpacity style={[styles.payButton, loading && { opacity: 0.6 }]}
+      <TouchableOpacity
+        style={[styles.payButton, loading && { opacity: 0.6 }]}
         onPress={handlePayment}
-        disabled={loading}>
+        disabled={loading}
+      >
         <Text style={styles.payButtonText}>
-          {loading ? 'Processing....' : `Pay $${totalAmount.toFixed(2)}`}</Text>
+          {loading ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -220,6 +254,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
 
 export default Payment;

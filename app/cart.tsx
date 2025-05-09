@@ -769,13 +769,7 @@ const Cart = () => {
                   <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
                   <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
                   <View style={styles.quantityControl}>
-                    <TouchableOpacity onPress={() => updateItemQuantity(item.id, item.quantity - 1)} style={styles.quantityButton} accessibilityLabel="Decrease quantity">
-                      <AntDesign name="minus" size={18} color="#8A2BE2" />
-                    </TouchableOpacity>
-                    <Text style={styles.itemQuantity}>{item.quantity}</Text>
-                    <TouchableOpacity onPress={() => updateItemQuantity(item.id, item.quantity + 1)} style={styles.quantityButton} accessibilityLabel="Increase quantity">
-                      <AntDesign name="plus" size={18} color="#8A2BE2" />
-                    </TouchableOpacity>
+                    
                   </View>
                 </View>
                 <TouchableOpacity

@@ -6,36 +6,26 @@ import {
   ActivityIndicator,
   Pressable,
   KeyboardAvoidingView,
-  ToastAndroid,
+  Alert,
+  Platform,
 } from 'react-native';
 import React, { useState, useContext } from 'react';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/FirebaseConfig';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useRouter } from 'expo-router';
 import { doc, setDoc } from 'firebase/firestore';
 import UserDetailsContext from '../../context/UserDetailContext';
 import { Ionicons, AntDesign } from '@expo/vector-icons';
-import { Alert } from 'react-native';
 
-const saveUser = async (firebaseUser: any) => { 
-  const userDataForFirestore = {
-    uid: firebaseUser.uid,
-    name: name, 
-    email: firebaseUser.email, 
-    role: 'user',
-    cartItems: [],
-    createdAt: new Date().toISOString(), 
-  };
-
-  console.log('Saving user data to Firestore:', firebaseUser.uid);
-  try {
-    await setDoc(doc(FIREBASE_DB, 'users', firebaseUser.uid), userDataForFirestore);
-    console.log('User data saved to Firestore successfully');
-    setUserDetails(userDataForFirestore);
-  } catch (error) {
-    console.error("Error saving user data to Firestore or updating Auth profile:", error);
-    Alert.alert('Error', 'Failed to save user data. Please try again.');
-    throw error;
+// Cross-platform toast helper ✅
+const showToast = (message: string) => {
+  console.log('Toast message:', message); // Debugging
+  if (Platform.OS === 'android') {
+    import('react-native').then(({ ToastAndroid }) => {
+      ToastAndroid.show(message, ToastAndroid.SHORT);
+    });
+  } else {
+    Alert.alert('', message);
   }
 };
 
@@ -54,13 +44,13 @@ const Register = () => {
 
   const validateInputs = () => {
     if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
-      ToastAndroid.show('Please fill all fields', ToastAndroid.SHORT);
+      showToast('Please fill all fields');
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      ToastAndroid.show('Please enter a valid email', ToastAndroid.SHORT);
+      showToast('Please enter a valid email');
       return false;
     }
 
@@ -70,11 +60,32 @@ const Register = () => {
     }
 
     if (password !== confirmPassword) {
-      ToastAndroid.show('Passwords do not match', ToastAndroid.SHORT);
+      showToast('Passwords do not match');
       return false;
     }
 
     return true;
+  };
+
+  const saveUser = async (user: any) => {
+    const userData = {
+      uid: user.uid,
+      name,
+      email,
+      role: 'user',
+      cartItems: [],
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      console.log('Saving user to Firestore:', user.uid);
+      await setDoc(doc(FIREBASE_DB, 'users', user.uid), userData);
+      setUserDetails(userData);
+      console.log('User saved successfully');
+    } catch (error) {
+      console.error('Error saving user data:', error);
+      showToast('Error saving user data. Please try again.');
+    }
   };
 
   const signUp = async () => {
@@ -92,7 +103,7 @@ const Register = () => {
 
       await saveUser(userCredential.user);
 
-      ToastAndroid.show('Registration successful!', ToastAndroid.LONG);
+      showToast('Registration successful!');
       router.replace('/(tabs)/home');
     } catch (error: any) {
       console.error('Registration error:', error.code, error.message);
@@ -102,28 +113,14 @@ const Register = () => {
         errorMessage = 'Email is already in use';
       } else if (error.code === 'auth/weak-password') {
         errorMessage = 'Password is too weak';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address';
       }
 
-      ToastAndroid.show(errorMessage, ToastAndroid.LONG);
+      showToast(errorMessage);
     } finally {
       setLoading(false);
     }
-  };
-
-  const saveUser = async (user: any) => {
-    const userData = {
-      name,
-      email,
-      password,
-      uid: user.uid,
-      role: 'user',
-      cartItems: [],
-    };
-
-    console.log('Saving user to Firestore:', user.uid);
-    await setDoc(doc(FIREBASE_DB, 'users', user.uid), userData);
-    setUserDetails(userData);
-    console.log('User saved successfully');
   };
 
   return (
@@ -293,11 +290,3 @@ const styles = StyleSheet.create({
 });
 
 export default Register;
-function setUserDetails(userDataForFirestore: {
-  uid: any; name: void; // Name from the registration form input
-  email: any; // Email from the authenticated Firebase user object
-  role: string; cartItems: never[]; createdAt: string;
-}) {
-  throw new Error('Function not implemented.');
-}
-
