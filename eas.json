@@ -14,7 +14,7 @@
         "buildType": "apk",
         "resourceClass": "medium"
       },
-      "cashe": {
+      "cache": {
         "key": "my-custom-cache-key-v2", 
         "clear": true 
       }
