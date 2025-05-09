@@ -1,57 +1,64 @@
-import React from 'react';
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, FlatList, Animated, Image, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '../../context/CartContext';
 import { FIREBASE_DB } from '../../config/FirebaseConfig';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import UserDetailsContext from '../../context/UserDetailContext';
 
 interface Course {
   id: string;
   title: string;
   description: string;
   price: string;
-  image: string | { uri: string } | null;
+  image: string | { uri: string };
   url: string;
   Channel: string;
+  status: string;
 }
-
 
 const CourseListing = () => {
   const router = useRouter();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
   const [search, setSearch] = React.useState('');
   const [courses, setCourses] = React.useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = React.useState<Course[]>([]);
   const { addToCart } = useCart();
-
   const currentUser = getAuth().currentUser;
 
-  React.useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const coursesCollection = collection(FIREBASE_DB, 'courses');
-        const querySnapshot = await getDocs(coursesCollection);
+  React.useEffect(
+    React.useCallback(() => {
+      const fetchCourses = async () => {
+        try {
+          const coursesCollection = collection(FIREBASE_DB, 'courses');
+          const querySnapshot = await getDocs(coursesCollection);
 
-        const coursesData: Course[] = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          title: doc.data().title,
-          description: doc.data().description,
-          price: doc.data().price,
-          image: doc.data().image ?? null,
-          url: doc.data().url,
-          Channel: doc.data().Channel,
-        }));
+          const coursesData: Course[] = querySnapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              title: data.title,
+              description: data.description,
+              price: data.price,
+              image: data.image,
+              url: data.url,
+              Channel: data.Channel,
+              status: data.status || 'available',
+            };
+          });
 
-        setCourses(coursesData);
-        setFilteredCourses(coursesData);
-      } catch (error) {
-        console.error('Error fetching courses:', error);
-      }
-    };
+          const availableCourses = coursesData.filter(course => course.status !== 'bought');
+          setCourses(availableCourses);
+          setFilteredCourses(availableCourses);
+        } catch (error) {
+          console.error('Error fetching courses:', error);
+        }
+      };
 
-    fetchCourses();
-  }, []);
+      fetchCourses();
+    }, [])
+  );
+
 
   const handleSearch = (text: string) => {
     setSearch(text);
@@ -62,49 +69,42 @@ const CourseListing = () => {
   };
 
   const handleAddToCart = async (course: Course) => {
-    if (!currentUser) {
-      alert('You must be logged in to add items to your cart.');
+    if (course.status === 'bought') {
+      alert('You already purchased this course.');
       return;
     }
-  
     try {
       const courseToAdd = {
         id: course.id,
-        userId: currentUser.uid,
         name: course.title,
-        price: parseFloat(course.price),  // Ensure price is a number
+        price: parseFloat(course.price),
         image: course.image,
         Channel: course.Channel,
-        quantity: 1,  // quantity will be added in CartContext logic
+        quantity: 1,
+        userId: currentUser?.uid ?? '',
       };
-  
-      const userCartRef = collection(FIREBASE_DB, 'users', currentUser.uid, 'cart');
-      await addDoc(userCartRef, courseToAdd);
-  
-      // Now add the course to the context's cart
+      const cartCollectionRef = collection(FIREBASE_DB, 'cart');
+      await addDoc(cartCollectionRef, courseToAdd);
       addToCart(courseToAdd);
-  
-      alert('Course added to your cart!');
+
+      alert('Course added to cart!');
     } catch (error) {
       console.error('Error adding to cart:', error);
       alert('There was an error adding the course to the cart.');
     }
   };
-  
- 
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerTitle}>Course Listing</Text>
+      <Text style={styles.title}>Course Listing</Text>
       <TextInput
         style={styles.searchBar}
         placeholder="Search for courses..."
-        placeholderTextColor="#9E9E9E"
         value={search}
         onChangeText={handleSearch}
       />
       <Text style={styles.resultsText}>
-        {filteredCourses.length} results found
+        {filteredCourses.length} results fdound
       </Text>
 
       <FlatList
@@ -120,7 +120,7 @@ const CourseListing = () => {
                   title: item.title,
                   description: item.description,
                   price: item.price,
-                  image: item.image as string,
+                  image: item.image || require('../../assets/images/Basha El Balaaaad.jpg'),
                   url: item.url,
                   channel: item.Channel,
                 },
@@ -128,13 +128,7 @@ const CourseListing = () => {
             }
           >
             <Image
-              source={
-                item.image
-                  ? (typeof item.image === 'string'
-                      ? { uri: item.image }
-                      : item.image)
-                  : require('../../assets/images/Basha El Balaaaad.jpg')
-              }
+              source={typeof item.image === 'string' ? { uri: item.image } : item.image}
               style={styles.image}
             />
             <View style={styles.textContainer}>
@@ -142,16 +136,19 @@ const CourseListing = () => {
               <Text style={styles.channel}>{item.Channel}</Text>
               <Text style={styles.description}>{item.description}</Text>
               <Text style={styles.price}>{item.price}</Text>
-              <TouchableOpacity
-                style={styles.button}
-                activeOpacity={0.8}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleAddToCart(item);
-                }}
-              >
-                <Text style={styles.buttonText}>Add to cart</Text>
-              </TouchableOpacity>
+              <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+                {item.status === 'bought' ? (
+                  <Text style={styles.boughtLabel}>Bought</Text>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.button, { backgroundColor: '#28a745' }]}
+                    activeOpacity={0.8}
+                    onPress={() => handleAddToCart(item)}
+                  >
+                    <Text style={styles.buttonText}>Add to cart</Text>
+                  </TouchableOpacity>
+                )}
+              </Animated.View>
             </View>
           </TouchableOpacity>
         )}
@@ -229,6 +226,16 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     color: '#FFFFFF',
     fontSize: 16,
+  },
+  boughtLabel: {
+    backgroundColor: '#555',  // dark grey to indicate it's inactive
+    color: '#ccc',            // light text to contrast the dark background
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    textAlign: 'center',
+    fontWeight: '600',
+    fontSize: 14,
   },
   button: {
     backgroundColor: '#2E7D32', // Dark green
